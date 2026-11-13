@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-09-01 19:03:26",
+  "flood_dataset": {
+    "records": 225150,
+    "features_count": 14,
+    "missing_values": 0,
+    "temporal_range": "2005-01-01 to 2025-12-31"
+  },
+  "cyclone_dataset": {
+    "records": 5000,
+    "features_count": 13,
+    "missing_values": 0,
+    "temporal_range": "1999-10-29 to 2025-12-31"
+  }
+}

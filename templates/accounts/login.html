@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM 2.0 - Disaster Intelligence | Login{% endblock %}
+{% block meta_description %}Sign in to RUDRAM to access role-based disaster monitoring, emergency coordination, and response tools.{% endblock %}
+{% block page_heading %}Incident Operations Command Authentication{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-md-6 col-lg-4">
+        <div class="rudram-card position-relative">
+            <!-- Black Close Login Button (×) -->
+            <button type="button" class="btn p-0 text-dark fw-bold position-absolute top-0 end-0 m-3 border-0 bg-transparent" onclick="closeLoginPage()" aria-label="Close login" title="Close login" style="font-size: 1.6rem; line-height: 1; opacity: 0.85; z-index: 10; cursor: pointer;">&times;</button>
+
+            <div class="text-center mb-4">
+                <img src="/static/images/rudram-logo.png" alt="RUDRAM 2.0 - Disaster Intelligence" class="img-fluid mb-3" style="max-width: 280px; background: #fff; border-radius: 8px; padding: 5px;">
+                <h4 class="fw-bold text-white mb-1">RUDRAM 2.0 Command Login</h4>
+                <div class="small text-secondary">Authorized Personnel &amp; Public Responders</div>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show small py-2 px-3 mb-3" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">Username / Email Address</label>
+                    <input type="text" name="username" class="form-control bg-dark border-secondary text-light" placeholder="Enter username or email address" required autofocus>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small text-secondary">Security Password</label>
+                    <div class="input-group">
+                        <input type="password" name="password" id="loginPasswordInput" class="form-control bg-dark border-secondary text-light border-end-0" placeholder="••••••••" required>
+                        <button type="button" class="btn btn-dark border-secondary border-start-0 text-secondary" id="btnTogglePassword" onclick="togglePasswordVisibility()" aria-label="Show password" title="Show password">
+                            <i data-lucide="eye" id="togglePasswordIcon" style="width: 18px; height: 18px;"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 fw-bold py-2">
+                    Enter Operations Command
+                </button>
+            </form>
+
+            <div class="mt-3 text-center small text-secondary">
+                Don't have an account?
+                <a href="{% url 'citizen_signup' %}" class="text-info fw-bold text-decoration-none ms-1">Create Citizen Account</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePasswordVisibility() {
+    const input = document.getElementById('loginPasswordInput');
+    const btn = document.getElementById('btnTogglePassword');
+    const icon = document.getElementById('togglePasswordIcon');
+    if (!input || !btn) return;
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.setAttribute('aria-label', 'Hide password');
+        btn.setAttribute('title', 'Hide password');
+        if (icon) {
+            icon.setAttribute('data-lucide', 'eye-off');
+            if (window.lucide) lucide.createIcons();
+        }
+    } else {
+        input.type = 'password';
+        btn.setAttribute('aria-label', 'Show password');
+        btn.setAttribute('title', 'Show password');
+        if (icon) {
+            icon.setAttribute('data-lucide', 'eye');
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+
+window.closeLoginPage = function closeLoginPage() {
+    if (document.activeElement) {
+        document.activeElement.blur();
+    }
+    const modalEl = document.getElementById('loginModal');
+    if (modalEl && window.bootstrap) {
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) {
+            modalInstance.hide();
+            return;
+        }
+    }
+    window.location.href = '/dashboard/';
+};
+</script>
+{% endblock %}

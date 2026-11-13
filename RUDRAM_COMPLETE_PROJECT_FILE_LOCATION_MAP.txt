@@ -1,0 +1,599 @@
+================================================================================
+RUDRAM PLATFORM — COMPLETE TECHNICAL PROJECT FILE & COMPONENT LOCATION MAP
+================================================================================
+Generated At: 2026-08-24T19:41:00+05:30
+Source of Truth: Actual Project Filesystem (c:\Users\Chubulu Mahanty\Desktop\RUDRAM)
+
+================================================================================
+1. PROJECT ROOT
+================================================================================
+PROJECT ROOT: c:\Users\Chubulu Mahanty\Desktop\RUDRAM
+
+Directory Structure:
+RUDRAM/
+├── Dockerfile
+├── README.md
+├── api-documentation.md
+├── architecture.md
+├── database.md
+├── demo-guide.md
+├── deployment.md
+├── ml-model.md
+├── satellite-processing.md
+├── troubleshooting.md
+├── docker-compose.yml
+├── requirements.txt
+├── .env
+├── db.sqlite3
+├── manage.py
+├── apps/
+│   ├── __init__.py
+│   ├── accounts/
+│   │   ├── admin.py
+│   │   ├── admin_views.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── permissions.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── alerts/
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── assistant/
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── engine.py
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── core/
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── context_processors.py
+│   │   ├── locations.py
+│   │   ├── models.py
+│   │   ├── tests.py
+│   │   ├── urls.py
+│   │   ├── views.py
+│   │   └── management/commands/
+│   │       ├── clear_demo_data.py
+│   │       └── test_live_services.py
+│   ├── disasters/
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── evacuation/
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── fire/
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── infrastructure/
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── population/
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── reports/
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── resources/
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── risk/
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── satellite/
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── shelters/
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   └── weather/
+│       ├── admin.py
+│       ├── apps.py
+│       ├── models.py
+│       ├── serializers.py
+│       ├── urls.py
+│       └── views.py
+├── config/
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── demo/
+│   ├── __init__.py
+│   ├── apps.py
+│   ├── demo_dataset.json
+│   ├── demo_engine.py
+│   ├── loader.py
+│   ├── urls.py
+│   ├── views.py
+│   ├── documentation/
+│   │   ├── api-documentation.md
+│   │   ├── architecture.md
+│   │   ├── database.md
+│   │   ├── demo-guide.md
+│   │   ├── deployment.md
+│   │   ├── ml-model.md
+│   │   ├── odisha-ml-training.md
+│   │   ├── satellite-processing.md
+│   │   └── troubleshooting.md
+│   └── management/commands/
+│       └── seed_demo.py
+├── gis/
+│   ├── exposure.py
+│   ├── geometry.py
+│   └── spatial_analysis.py
+├── ml/
+│   ├── data/
+│   │   ├── processed/
+│   │   │   ├── odisha_flood_training_dataset.csv
+│   │   │   └── odisha_flood_training_dataset.parquet
+│   │   ├── raw/
+│   │   │   ├── boundaries/odisha_boundary.geojson
+│   │   │   ├── dem/odisha_district_spatial_grid.csv
+│   │   │   ├── flood_events/odisha_historical_flood_events_2005_2024.csv
+│   │   │   └── weather/nasa_power/odisha_daily_weather_2005_2024.csv
+│   │   └── validation/
+│   │       ├── model_metrics.json
+│   │       └── model_report.txt
+│   ├── models/
+│   │   ├── cyclone_risk_xgboost.joblib
+│   │   ├── flood_risk_random_forest.joblib
+│   │   ├── flood_risk_xgboost.joblib
+│   │   └── model_metadata.json
+│   ├── risk_prediction/
+│   │   ├── cyclone_features.py
+│   │   ├── cyclone_model.py
+│   │   ├── features.py
+│   │   ├── model.py
+│   │   └── train_cyclone_model.py
+│   └── training/
+│       ├── build_training_dataset.py
+│       ├── download_data.py
+│       ├── evaluate.py
+│       ├── feature_engineering.py
+│       ├── preprocess.py
+│       ├── train.py
+│       └── validate_raw_data.py
+├── services/
+│   ├── firms_service.py
+│   ├── gee_service.py
+│   ├── google_maps_service.py
+│   ├── gpm_service.py
+│   ├── nasa_power_service.py
+│   ├── open_meteo.py
+│   ├── osm_service.py
+│   ├── osrm_service.py
+│   ├── terrain_service.py
+│   └── weather_service.py
+├── static/
+│   ├── css/custom.css
+│   └── js/
+│       ├── main.js
+│       └── map.js
+└── templates/
+    ├── base.html
+    ├── accounts/
+    │   ├── login.html
+    │   └── signup.html
+    ├── admin/
+    │   └── dashboard.html
+    ├── alerts/
+    │   └── index.html
+    ├── assistant/
+    │   └── chat.html
+    ├── dashboard/
+    │   └── index.html
+    ├── disasters/
+    │   ├── detail.html
+    │   ├── drone.html
+    │   └── list.html
+    ├── evacuation/
+    │   └── index.html
+    ├── map/
+    │   └── index.html
+    ├── operator/
+    │   └── dashboard.html
+    ├── population/
+    │   └── exposure.html
+    ├── reports/
+    │   └── index.html
+    ├── resources/
+    │   └── index.html
+    ├── risk/
+    │   └── predict.html
+    ├── satellite/
+    │   └── index.html
+    ├── settings/
+    │   └── index.html
+    └── shelters/
+        └── index.html
+
+================================================================================
+2. COMPLETE FILE INVENTORY
+================================================================================
+
+[CORE CONFIGURATION & RUNTIME]
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\manage.py
+FILE TYPE: Python Executable
+PURPOSE: Django administrative CLI utility.
+USED BY: CLI, Docker entrypoint.
+
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\config\settings.py
+FILE TYPE: Python Configuration
+PURPOSE: Global Django settings, database configuration (MySQL + SQLite fallback), middleware, context processors, logging.
+USED BY: Django WSGI/ASGI applications.
+
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\config\urls.py
+FILE TYPE: Python Router
+PURPOSE: Global URL routing dispatch table including all sub-app URL patterns.
+USED BY: Django web server.
+
+[SECURITY & RBAC]
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\apps\accounts\permissions.py
+FILE TYPE: Python Module
+PURPOSE: Strict server-side RBAC authorization functions (is_strict_admin, is_operator, admin_required decorator).
+USED BY: All admin and operator views across the application.
+
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\apps\accounts\views.py
+FILE TYPE: Python View Controller
+PURPOSE: Login, signup, logout, role switching, current-user API.
+USED BY: Authentication routes.
+
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\apps\accounts\admin_views.py
+FILE TYPE: Python View Controller
+PURPOSE: Admin Dashboard, Operator Dashboard, Shelter/Resource/Alert/User management endpoints.
+USED BY: Admin and Operator portals.
+
+[AI ASSISTANT & RAG SEARCH ENGINE]
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\apps\assistant\engine.py
+FILE TYPE: Python Module
+PURPOSE: Project-Aware Python Search Engine & RAG Pipeline. Performs multi-source telemetry, DB, and documentation indexing with zero-hallucination guardrails.
+USED BY: AssistantChatAPIView in apps/assistant/views.py.
+
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\apps\assistant\views.py
+FILE TYPE: Python View Controller
+PURPOSE: Renders assistant page, executes AssistantChatAPIView and AssistantAnalyzeAPIView.
+USED BY: /assistant/ and /api/assistant/chat/.
+
+[MACHINE LEARNING INFERENCE & TRAINING]
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\ml\risk_prediction\model.py
+FILE TYPE: Python ML Inference
+PURPOSE: Loads flood_risk_xgboost.joblib, executes flood risk prediction, calculates confidence and explainable feature contributions.
+USED BY: RiskPredictAPIView, disasters_list_view, assistant engine.
+
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\ml\risk_prediction\cyclone_model.py
+FILE TYPE: Python ML Inference
+PURPOSE: Loads cyclone_risk_xgboost.joblib, executes cyclone risk prediction.
+USED BY: RiskPredictAPIView, disasters_list_view.
+
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\ml\training\train.py
+FILE TYPE: Python ML Training
+PURPOSE: Trains XGBoost and Random Forest flood risk models on historical Odisha dataset (2005-2024).
+USED BY: Offline model training.
+
+[EXTERNAL SERVICES]
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\services\open_meteo.py
+FILE TYPE: Python Service Integrator
+PURPOSE: Open-Meteo Multi-Hazard Live Weather API client (temperature, rainfall, wind, gusts, 7d forecast).
+USED BY: Weather views, risk views, assistant engine.
+
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\services\google_maps_service.py
+FILE TYPE: Python Service Integrator
+PURPOSE: Google Maps JS, Places, Geocoding, and Routes API client with OSRM fallback.
+USED BY: Evacuation routing and shelter geocoding views.
+
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\services\gee_service.py
+FILE TYPE: Python Service Integrator
+PURPOSE: Google Earth Engine Sentinel-1 SAR & Sentinel-2 MSI NDWI/MNDWI flood imagery integration.
+USED BY: Satellite Lab views.
+
+[FRONTEND ASSETS & TEMPLATES]
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\templates\base.html
+FILE TYPE: HTML Template
+PURPOSE: Master base layout with topbar navigation, mobile drawer, theme controls, and script inclusions.
+USED BY: All page templates.
+
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\static\js\map.js
+FILE TYPE: JavaScript File
+PURPOSE: Leaflet map engine initialization, weather hub markers, shelter pins, circle risk zones, route polyline rendering.
+USED BY: GIS Risk Map, Home Dashboard, Evacuation, Drone View.
+
+FILE PATH: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\static\css\custom.css
+FILE TYPE: CSS File
+PURPOSE: Custom styling, dual-theme engine variables ([data-theme="light"] / [data-theme="dark"]), table-river-status, rescue-team-card.
+USED BY: All HTML templates.
+
+================================================================================
+3. DATABASE ARCHITECTURE & MODELS
+================================================================================
+DATABASE ENGINE: MySQL 8.0 (django.db.backends.mysql)
+FALLBACK ENGINE: SQLite 3 (django.db.backends.sqlite3 - automatic zero-dependency fallback)
+MIGRATIONS LOCATION: apps/<app_name>/migrations/
+
+MODELS INVENTORY:
+1. UserProfile (apps/accounts/models.py)
+   - Table: accounts_userprofile
+   - Fields: user, role (ADMIN, EMERGENCY_OPERATOR, CITIZEN), phone, organization, assigned_zone, latitude, longitude
+2. Disaster & DisasterTimeline (apps/disasters/models.py)
+   - Tables: disasters_disaster, disasters_disastertimeline
+   - Fields: disaster_type, title, location_name, risk_level, status, affected_population, coordinates
+3. Alert & Notification & AlertApprovalRequest (apps/alerts/models.py)
+   - Tables: alerts_alert, alerts_notification, alerts_alertapprovalrequest
+   - Fields: title, hazard_type, severity (EXTREME, SEVERE), affected_area, is_active, issued_at
+4. Shelter (apps/shelters/models.py)
+   - Table: shelters_shelter
+   - Fields: name, address, latitude, longitude, total_capacity, current_occupancy, status, elevation_m
+5. Resource & ResourceAllocation & RescueTeam (apps/resources/models.py)
+   - Tables: resources_resource, resources_resourceallocation, resources_rescueteam
+   - Fields: name, category, quantity_available, warehouse_location, team_type, members_count, status
+6. EvacuationRoute & EvacuationWaypoint (apps/evacuation/models.py)
+   - Tables: evacuation_evacuationroute, evacuation_evacuationwaypoint
+   - Fields: origin_name, destination_shelter, distance_km, estimated_minutes, polyline_geojson
+7. RiskZone & HistoricalPredictionLog (apps/risk/models.py)
+   - Tables: risk_riskzone, risk_historicalpredictionlog
+   - Fields: zone_name, risk_score, risk_level, center_latitude, center_longitude, radius_km
+8. WeatherData (apps/weather/models.py)
+   - Table: weather_weatherdata
+   - Fields: location_name, latitude, longitude, temperature_c, rainfall_mm, humidity_pct, wind_speed_kmh
+9. EmergencyRecommendation (apps/assistant/models.py)
+   - Table: assistant_emergencyrecommendation
+   - Fields: situation_summary, priority, action_items, rationale, created_at
+10. DataSourceStatus & SystemSetting (apps/core/models.py)
+    - Tables: core_datasourcestatus, core_systemsetting
+    - Fields: service_name, status, is_online, latency_ms, last_checked
+
+================================================================================
+4. MACHINE LEARNING ARCHITECTURE
+================================================================================
+ML DIRECTORY: c:\Users\Chubulu Mahanty\Desktop\RUDRAM\ml\
+
+MODEL BINARY FILES:
+1. c:\Users\Chubulu Mahanty\Desktop\RUDRAM\ml\models\flood_risk_xgboost.joblib
+   - Model Type: XGBoost Regressor / Classifier
+   - Purpose: Primary Flood Risk Score Estimator (0-100%)
+2. c:\Users\Chubulu Mahanty\Desktop\RUDRAM\ml\models\flood_risk_random_forest.joblib
+   - Model Type: Scikit-Learn Random Forest Classifier
+   - Purpose: Fallback Flood Risk Classifier
+3. c:\Users\Chubulu Mahanty\Desktop\RUDRAM\ml\models\cyclone_risk_xgboost.joblib
+   - Model Type: XGBoost Regressor
+   - Purpose: Cyclone Risk Estimator
+
+FEATURE ENGINEERING & PREDICTORS:
+- ml/risk_prediction/features.py: Normalizes 10 hydrological features (rainfall rate, 24h rain, 7d rain, forecast, elevation, water distance, river gauge level, soil moisture).
+- ml/risk_prediction/model.py: Executes XGBoost prediction, calculates confidence score, SHAP-like feature contributions, and operational directives.
+- ml/risk_prediction/cyclone_model.py: Executes cyclone risk estimation.
+
+TRAINING PIPELINE:
+- ml/training/build_training_dataset.py: Constructs historical dataset.
+- ml/training/train.py: Fits XGBoost model on historical Odisha disaster data (2005-2024).
+
+================================================================================
+5. AI ASSISTANT & RAG SEARCH ENGINE
+================================================================================
+LOCATION: apps/assistant/
+
+COMPONENTS:
+1. apps/assistant/engine.py (RudramProjectSearchEngine & ProjectKnowledgeIndexer)
+   - RAG Search Pipeline: User Query -> Intent Parser -> Multi-Source Project Retrieval -> Context Builder -> Answer Generator.
+   - Safe Indexer: Indexes README.md, architecture.md, demo-guide.md, database.md, deployment.md, api-documentation.md.
+   - Zero-Hallucination Guardrail: Returns explicit "Data unavailable" notification when requested sensor values are unmeasured.
+2. apps/assistant/views.py
+   - AssistantChatAPIView (POST /api/assistant/chat/): Receives queries, returns source-aware JSON.
+   - AssistantAnalyzeAPIView (POST /api/assistant/analyze/): Synthesizes tactical action checklists.
+3. templates/assistant/chat.html
+   - UI chat bubble interface with formatted Markdown, source badges, data timestamps, and interactive map buttons.
+
+================================================================================
+6. REST API ENDPOINT INVENTORY
+================================================================================
+
+| Method | Endpoint | Source File | View Class / Function | Role Required |
+| :--- | :--- | :--- | :--- | :--- |
+| GET | /api/health/ | apps/core/views.py | HealthCheckAPIView | Public |
+| GET | /api/current-user/ | apps/accounts/views.py | CurrentUserAPIView | Authenticated |
+| GET | /api/data-sources/ | apps/core/views.py | DataSourcesAPIView | Public |
+| GET | /api/locations/states/ | apps/core/views.py | IndianStatesAPIView | Public |
+| GET | /api/locations/india-hubs/| apps/core/views.py | IndiaHubsAPIView | Public |
+| GET | /api/locations/high-alerts/| apps/core/views.py | HighAlertLocationsAPIView | Public |
+| GET | /api/weather/current/ | apps/weather/views.py | CurrentWeatherAPIView | Public |
+| GET | /api/weather/forecast/ | apps/weather/views.py | ForecastWeatherAPIView | Public |
+| GET | /api/weather/india/ | apps/weather/views.py | IndiaLiveWeatherAPIView | Public |
+| GET | /api/weather/state/ | apps/weather/views.py | StateDistrictsLiveWeatherAPIView | Public |
+| POST| /api/risk/predict/ | apps/risk/views.py | RiskPredictAPIView | Public / Auth |
+| GET | /api/risk/zones/ | apps/risk/views.py | RiskZoneListAPIView | Public |
+| GET | /api/shelters/ | apps/shelters/views.py | ShelterListAPIView | Public |
+| POST| /api/shelters/recommend/| apps/shelters/views.py | ShelterRecommendAPIView | Public |
+| POST| /api/evacuation/route/ | apps/evacuation/views.py| EvacuationRouteAPIView | Public |
+| GET | /api/alerts/ | apps/alerts/views.py | AlertListCreateAPIView | Public |
+| POST| /api/alerts/ | apps/alerts/views.py | AlertListCreateAPIView | Admin Only |
+| POST| /api/alerts/request-change/| apps/alerts/views.py| AlertRequestChangeAPIView| Operator / Admin |
+| POST| /api/assistant/chat/ | apps/assistant/views.py| AssistantChatAPIView | Public / Auth |
+| POST| /api/assistant/analyze/| apps/assistant/views.py| AssistantAnalyzeAPIView | Public / Auth |
+| POST| /api/admin/demo-mode/ | apps/core/views.py | AdminDemoModeAPIView | Admin Only |
+| GET | /api/admin/api-health/ | apps/accounts/admin_views.py| AdminApiHealthCheckAPIView| Admin Only |
+| GET | /api/reports/export-csv/| apps/reports/views.py | ExportCsvAPIView | Admin Only |
+| GET | /api/reports/export-pdf/| apps/reports/views.py | ExportPdfAPIView | Admin Only |
+
+================================================================================
+7. PAGE TO FILE MAP
+================================================================================
+
+1. Home Dashboard
+   - URL: / and /dashboard/
+   - HTML: templates/dashboard/index.html
+   - JS: static/js/map.js, static/js/main.js
+   - Backend: apps/core/views.py (dashboard_view)
+   - Role: Public / Authenticated
+
+2. Disaster Monitor
+   - URL: /disasters/
+   - HTML: templates/disasters/list.html
+   - Backend: apps/disasters/views.py (disasters_list_view)
+   - Role: Public / Authenticated
+
+3. Drone View
+   - URL: /drone-view/
+   - HTML: templates/disasters/drone.html
+   - Backend: apps/disasters/views.py (drone_view protected by @admin_required)
+   - Role: Admin Only
+
+4. Risk Prediction Studio
+   - URL: /risk/
+   - HTML: templates/risk/predict.html
+   - Backend: apps/risk/views.py (risk_prediction_view)
+   - Role: Public / Authenticated
+
+5. GIS Risk Map
+   - URL: /map/
+   - HTML: templates/map/index.html
+   - JS: static/js/map.js
+   - Backend: apps/core/views.py (gis_map_view)
+   - Role: Public / Authenticated
+
+6. Population Exposure
+   - URL: /population/
+   - HTML: templates/population/exposure.html
+   - Backend: apps/population/views.py (population_view)
+   - Role: Public / Authenticated
+
+7. Alerts Portal
+   - URL: /alerts/
+   - HTML: templates/alerts/index.html
+   - Backend: apps/alerts/views.py (alerts_view)
+   - Role: Public / Authenticated
+
+8. Evacuation Planner
+   - URL: /evacuation/
+   - HTML: templates/evacuation/index.html
+   - Backend: apps/evacuation/views.py (evacuation_view)
+   - Role: Public / Authenticated
+
+9. Shelters Management
+   - URL: /shelters/
+   - HTML: templates/shelters/index.html
+   - Backend: apps/shelters/views.py (shelters_view)
+   - Role: Public / Authenticated
+
+10. Resources Logistics
+    - URL: /resources/
+    - HTML: templates/resources/index.html
+    - Backend: apps/resources/views.py (resources_view)
+    - Role: Public / Authenticated
+
+11. AI Assistant
+    - URL: /assistant/
+    - HTML: templates/assistant/chat.html
+    - Backend: apps/assistant/views.py (assistant_view) & apps/assistant/engine.py
+    - Role: Public / Authenticated
+
+12. Satellite Lab
+    - URL: /satellite/
+    - HTML: templates/satellite/index.html
+    - Backend: apps/satellite/views.py (satellite_view)
+    - Role: Public / Authenticated
+
+13. System Settings
+    - URL: /settings/
+    - HTML: templates/settings/index.html
+    - Backend: apps/core/views.py (settings_view)
+    - Role: Public / Authenticated (External APIs card Admin-Only)
+
+14. Admin Command Dashboard
+    - URL: /admin-dashboard/
+    - HTML: templates/admin/dashboard.html
+    - Backend: apps/accounts/admin_views.py (admin_dashboard_view protected by @admin_required)
+    - Role: Admin Only
+
+15. Operator Control Desk
+    - URL: /operator-dashboard/
+    - HTML: templates/operator/dashboard.html
+    - Backend: apps/accounts/admin_views.py (operator_dashboard_view protected by @operator_required)
+    - Role: Operator & Admin
+
+================================================================================
+8. DUPLICATE & ORPHAN ANALYSIS
+================================================================================
+DUPLICATE FILES:
+1. Root documentation markdown files (README.md, architecture.md, database.md, deployment.md, api-documentation.md, demo-guide.md, ml-model.md, satellite-processing.md, troubleshooting.md) duplicate files located in demo/documentation/ (demo/documentation/architecture.md, etc.).
+2. Geocode API endpoint aliases: /api/location/geocode/ defined in apps/shelters/urls.py and apps/weather/urls.py.
+
+ORPHAN / UNLINKED ITEMS:
+1. apps/fire/ (models.py, views.py, urls.py): Defines FireHotspot model and endpoints, but no standalone topbar dropdown item exists (fire telemetry is integrated directly into live weather and map layers).
+2. demo/management/commands/seed_demo.py: Seed script for populating demo tables.
+
+================================================================================
+9. IMPLEMENTATION STATUS
+================================================================================
+FULLY IMPLEMENTED:
+- Multi-hazard live weather telemetry ingestion (Open-Meteo API).
+- XGBoost Flood & Cyclone Risk estimation ML engines (ml/risk_prediction/model.py).
+- Project-Aware Python Search & RAG Engine (apps/assistant/engine.py).
+- Leaflet GIS map with responsive circular risk zones & weather hub pins.
+- Road-based evacuation routing (Google Routes API + OSRM fallback).
+- Emergency shelter management with dynamic occupancy tracking.
+- Common Alerting Protocol (CAP) emergency warning broadcast system.
+- Strict 3-Tier RBAC (Admin, Operator, Citizen) with Admin Dashboard protection.
+- Admin Drone Monitoring View with offline stream fallback.
+- Light Mode & Dark Mode dual-theme engine across all cards & modals.
+
+CONFIGURED ONLY / PARTIALLY IMPLEMENTED:
+- Google Earth Engine (GEE): Service module implemented (services/gee_service.py); GEE private key unconfigured.
+- Live Drone WebRTC Video Feed: UI & telemetry status panel built; requires live RTSP/WebRTC hardware camera endpoint.
+
+================================================================================
+DOCUMENTED BUT NOT FOUND IN CURRENT FILESYSTEM:
+- Live hardware WebRTC drone video stream source.
+
+FOUND IN CODEBASE — NOT DOCUMENTED:
+- apps/assistant/engine.py (Project-Aware Python Search & RAG Engine).
+- apps/accounts/permissions.py (is_strict_admin profile role priority check).
+================================================================================

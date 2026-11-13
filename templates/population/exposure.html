@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM - Population Exposure & Vulnerability Analytics{% endblock %}
+{% block meta_description %}Explore population exposure, vulnerable communities, and disaster impact indicators with RUDRAM analytics.{% endblock %}
+{% block page_heading %}Population Exposure & Vulnerability Mapping{% endblock %}
+
+{% block content %}
+<!-- Top Metrics Summary -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">Total Monitored Population</div>
+                <div class="stat-value text-white">{% if has_zone_data %}{{ total_pop }}{% else %}No data{% endif %}</div>
+                <div class="badge-source mt-1">Population exposure records</div>
+            </div>
+            <i data-lucide="users" class="text-secondary opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">Exposed Inundation Fringe</div>
+                <div class="stat-value text-warning">{% if has_zone_data %}{{ exposed_pop }}{% else %}No data{% endif %}</div>
+                <div class="badge-source mt-1">{% if has_zone_data %}{{ exposure_percentage }}% of monitored population{% else %}No population dataset{% endif %}</div>
+            </div>
+            <i data-lucide="alert-triangle" class="text-warning opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">High Vulnerability</div>
+                <div class="stat-value text-danger">{% if has_zone_data %}{{ vulnerable_pop }}{% else %}No data{% endif %}</div>
+                <div class="badge-source mt-1">Elderly / Infants / Disabled</div>
+            </div>
+            <i data-lucide="heart-pulse" class="text-danger opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">Immediate Embankment Risk</div>
+                <div class="stat-value text-danger">{% if has_zone_data %}{{ critical_pop }}{% else %}No data{% endif %}</div>
+                <div class="badge-source mt-1">Mandatory Evacuees</div>
+            </div>
+            <i data-lucide="user-x" class="text-danger opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Zone Analysis Breakdown Table -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="rudram-card">
+            <h6 class="fw-bold mb-3 d-flex align-items-center justify-content-between">
+                <span>Catchment Vulnerability Sectors</span>
+                <span class="badge-source">WorldPop & Local GIS Overlay</span>
+            </h6>
+            <div class="table-responsive">
+                <table class="table table-river-status table-hover small mb-0">
+                    <thead>
+                        <tr class="text-secondary">
+                            <th>Catchment Zone</th>
+                            <th>Total Pop</th>
+                            <th>Exposed</th>
+                            <th>Vulnerable</th>
+                            <th>Critical Risk</th>
+                            <th>Density</th>
+                            <th>Exposure Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for zone in zones %}
+                        <tr>
+                            <td><strong>{{ zone.zone_name }}</strong></td>
+                            <td>{{ zone.total_population }}</td>
+                            <td class="text-warning fw-bold">{{ zone.exposed_population }}</td>
+                            <td class="text-info">{{ zone.vulnerable_population }}</td>
+                            <td class="text-danger fw-bold">{{ zone.critical_risk_population }}</td>
+                            <td>{{ zone.density_per_sqkm }} /km²</td>
+                            <td><span class="badge badge-risk-{% if zone.exposure_score > 80 %}critical{% elif zone.exposure_score > 60 %}high{% else %}moderate{% endif %}">{{ zone.exposure_score }}%</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-secondary py-4">No population exposure records are available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demographic Distribution Chart -->
+    <div class="col-lg-4">
+        <div class="rudram-card h-100">
+            <h6 class="fw-bold mb-3 small text-uppercase text-secondary">Vulnerability Stratification</h6>
+            {% if has_zone_data %}
+            <div style="height: 220px;">
+                <canvas id="vulnChart"></canvas>
+            </div>
+            {% else %}
+            <p class="text-secondary small mb-0">Chart unavailable until population exposure records are added.</p>
+            {% endif %}
+            {% if has_zone_data and shelter_deficit > 0 %}
+            <div class="alert alert-dark border border-secondary border-opacity-25 small p-2 mt-3 mb-0">
+                <strong>Shelter deficit:</strong> {{ shelter_deficit }} additional capacity units are recorded across monitored zones.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if has_zone_data %}
+{{ population_chart_data|json_script:"populationChartData" }}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('vulnChart').getContext('2d');
+    const populationData = JSON.parse(document.getElementById('populationChartData').textContent);
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Not recorded as exposed', 'Exposed population'],
+            datasets: [{
+                data: populationData,
+                backgroundColor: ['#10b981', '#f59e0b'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } }
+            }
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

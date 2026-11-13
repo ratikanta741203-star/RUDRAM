@@ -1,0 +1,31 @@
+name,lat,lon,elevation,slope,pop_density,river,dist_water
+Angul,20.84,85.1,138.0,4.2,200,Brahmani/Mahanadi,3.2
+Balangir,20.72,83.48,115.0,2.8,251,Tel/Suktel,2.8
+Balasore,21.49,86.93,16.0,0.8,610,Subarnarekha/Budhabalanga,0.9
+Bargarh,21.33,83.62,172.0,3.1,253,Mahanadi/Jeera,4.1
+Bhadrak,21.06,86.5,18.0,0.7,601,Baitarani/Salandi,0.8
+Boudh,20.84,84.32,125.0,3.5,142,Mahanadi/Bagh,1.2
+Cuttack,20.46,85.88,24.0,1.1,667,Mahanadi/Kathajodi/Birupa,0.5
+Deogarh,21.53,84.73,210.0,6.2,106,Brahmani,5.4
+Dhenkanal,20.67,85.6,95.0,3.4,268,Brahmani/Ramiala,2.1
+Gajapati,18.81,84.16,280.0,8.5,133,Vansadhara/Rushikulya,2.4
+Ganjam,19.38,85.06,32.0,1.9,430,Rushikulya/Ghodahada,1.1
+Jagatsinghpur,20.27,86.17,12.0,0.4,681,Mahanadi/Devi/Alaka,0.4
+Jajpur,20.85,86.33,22.0,0.9,630,Baitarani/Brahmani/Kharasrota,0.6
+Jharsuguda,21.85,84.01,218.0,3.8,274,Ib/Bheden,3.5
+Kalahandi,19.91,83.12,255.0,5.2,199,Tel/Indravati,3.8
+Kandhamal,20.15,84.15,580.0,11.2,91,Bagh/Salki,6.5
+Kendrapara,20.5,86.42,10.0,0.3,545,Mahanadi/Brahmani/Luna,0.4
+Kendujhar,21.63,85.58,480.0,7.4,217,Baitarani/Ardei,3.0
+Khordha,20.18,85.62,28.0,1.8,800,Daya/Kuakhai/Bhargavi,0.7
+Koraput,18.81,82.71,870.0,12.5,157,Kolab/Machkund,5.1
+Malkangiri,18.35,81.9,195.0,4.6,106,Sabari/Sileru/Potteru,1.8
+Mayurbhanj,21.93,86.73,120.0,4.1,241,Budhabalanga/Palpala,2.2
+Nabarangpur,19.23,82.55,570.0,6.1,230,Indravati/Turi,4.0
+Nayagarh,20.13,85.11,90.0,3.9,248,Mahanadi/Kusumi,2.5
+Nuapada,20.83,82.53,260.0,4.5,157,Jonk/Sundar,3.7
+Puri,19.81,85.83,8.0,0.3,488,Bhargavi/Daya/Kushabhadra,0.5
+Rayagada,19.17,83.42,210.0,7.8,137,Nagavali/Vansadhara,1.5
+Sambalpur,21.47,83.97,150.0,2.9,158,Mahanadi (Hirakud Downstream),0.8
+Subarnapur,20.84,83.92,120.0,2.4,231,Mahanadi/Tel Confluence,0.7
+Sundargarh,22.12,84.04,230.0,4.8,216,Ib/Brahmani/Koel,2.9

@@ -1,0 +1,61 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: rudram_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: rudram_db
+      MYSQL_USER: rudram_user
+      MYSQL_PASSWORD: secure-development-password
+      MYSQL_ROOT_PASSWORD: secure-root-password
+    # MySQL is accessible to Django on internal port 3306 on the Docker network.
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "rudram_user", "-psecure-development-password"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  backend:
+    build: .
+    container_name: rudram_backend
+    restart: unless-stopped
+    command: >
+      sh -c "while ! nc -z db 3306; do echo 'Waiting for MySQL...'; sleep 1; done &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+      - ./secrets:/app/secrets:ro
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DB_ENGINE=django.db.backends.mysql
+      - DB_NAME=rudram_db
+      - DB_USER=rudram_user
+      - DB_PASSWORD=secure-development-password
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_FALLBACK_SQLITE=False
+      - DEMO_MODE=${DEMO_MODE:-False}
+      - SECRET_KEY=django-insecure-rudram-smart-india-hackathon-2026-disaster-resilience
+      - DEBUG=True
+      - GPM_ENABLED=${GPM_ENABLED:-True}
+      - GPM_EARTHDATA_USERNAME=${GPM_EARTHDATA_USERNAME:-}
+      - GPM_EARTHDATA_PASSWORD=${GPM_EARTHDATA_PASSWORD:-}
+      - GPM_DATA_SOURCE=${GPM_DATA_SOURCE:-IMERG_EARLY}
+      - GEE_ENABLED=${GEE_ENABLED:-True}
+      - GEE_PROJECT_ID=${GEE_PROJECT_ID:-rudram-disaster-intelligence}
+      - GEE_SERVICE_ACCOUNT=${GEE_SERVICE_ACCOUNT:-rudram-earth-engine@rudram-disaster-intelligence.iam.gserviceaccount.com}
+      - GEE_PRIVATE_KEY_PATH=${GEE_PRIVATE_KEY_PATH:-/app/secrets/gee-service-account.json}
+      - MODEL_PATH=${MODEL_PATH:-ml/models/flood_risk_xgboost.joblib}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

@@ -1,0 +1,12 @@
+metric,value
+Total Records,219150
+Total Districts Covered,30
+Start Date,2005-01-01
+End Date,2024-12-31
+Total Years,20
+Flood Event Samples (Class 1),1730
+Non-Flood Samples (Class 0),217420
+Flood Prevalence (%),0.79%
+Missing Values Count,0
+Invalid Coordinates,0
+Duplicate Rows,0

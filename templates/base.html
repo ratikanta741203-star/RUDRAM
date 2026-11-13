@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}RUDRAM 2.0 - Disaster Intelligence{% endblock %}</title>
+    <link rel="icon" type="image/png" sizes="64x64" href="/static/images/rudram-favicon.png">
+    <script>
+        (function() {
+            const storedTheme = localStorage.getItem('rudram_theme');
+            const theme = storedTheme === 'dark' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        })();
+    </script>
+    
+    <!-- Meta & SEO -->
+    <meta name="description" content="{% block meta_description %}RUDRAM provides disaster intelligence, flood risk monitoring, emergency coordination, and response tools for India.{% endblock %}">
+    <meta name="author" content="RUDRAM Smart India Hackathon Team">
+    {% if request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'citizen_signup' or request.resolver_match.url_name == 'settings' or request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'operator_dashboard' %}
+    <meta name="robots" content="noindex, nofollow">
+    {% endif %}
+    {% if SITE_URL and request.resolver_match %}
+    <link rel="canonical" href="{{ SITE_URL }}{{ request.path }}">
+    <meta property="og:url" content="{{ SITE_URL }}{{ request.path }}">
+    <meta property="og:image" content="{{ SITE_URL }}/static/images/rudram-social.png">
+    <meta name="twitter:image" content="{{ SITE_URL }}/static/images/rudram-social.png">
+    {% endif %}
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="RUDRAM 2.0">
+    <meta property="og:title" content="RUDRAM 2.0 | {{ SEO_PAGE_TITLE }}">
+    <meta property="og:description" content="Disaster intelligence for multi-hazard monitoring, risk assessment, and emergency response coordination.">
+    <meta property="og:image:alt" content="RUDRAM 2.0 Disaster Intelligence logo">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="RUDRAM 2.0 | {{ SEO_PAGE_TITLE }}">
+    <meta name="twitter:description" content="Disaster intelligence for multi-hazard monitoring, risk assessment, and emergency response coordination.">
+    {% if SITE_URL %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "RUDRAM 2.0",
+      "url": "{{ SITE_URL|escapejs }}",
+      "logo": "{{ SITE_URL|escapejs }}/static/images/rudram-logo.png",
+      "email": "{{ PUBLIC_ORGANIZATION_EMAIL|escapejs }}",
+      "telephone": "{{ PUBLIC_ORGANIZATION_PHONE|escapejs }}"
+    }
+    </script>
+    {% endif %}
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/custom.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <a class="skip-link" href="#page-content">Skip to content</a>
+    <div class="scroll-progress" id="scrollProgress" role="progressbar" aria-label="Page reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span></span>
+    </div>
+    <div class="page-loading-indicator" id="pageLoadingIndicator" aria-hidden="true"></div>
+    <div class="app-wrapper">
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Topbar Navigation Header -->
+            <header class="topbar d-flex align-items-center justify-content-between px-3 px-lg-4 py-2 border-bottom border-secondary border-opacity-25 bg-dark">
+                <!-- Brand & Top Navigation Groups -->
+                <div class="d-flex align-items-center gap-3 gap-lg-4">
+                    <!-- Brand Logo -->
+                    <a href="{% url 'dashboard' %}" class="text-decoration-none d-flex align-items-center gap-2 me-2">
+                        <img src="/static/images/rudram-logo.png" alt="RUDRAM 2.0 - Disaster Intelligence" style="width: 185px; height: 52px; object-fit: contain; background: #fff; border-radius: 6px; padding: 3px;">
+                    </a>
+
+                    <button class="btn btn-sm btn-outline-secondary" type="button" id="themeToggle" aria-label="Switch to dark mode" title="Switch to dark mode">
+                        <i data-lucide="moon" style="width: 16px; height: 16px;" aria-hidden="true"></i>
+                        <span class="visually-hidden">Switch to dark mode</span>
+                    </button>
+
+                    <!-- Top Navigation Bar -->
+                    <nav class="d-none d-xl-flex align-items-center gap-1">
+                        <!-- 1. HOME -->
+                        <a href="{% url 'dashboard' %}" class="btn btn-sm text-light fw-semibold px-3 py-1 text-decoration-none {% if request.resolver_match.url_name == 'dashboard' or request.path == '/' %}bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50{% endif %}">
+                            <i data-lucide="home" class="me-1" style="width: 15px; height: 15px;"></i> HOME
+                        </a>
+
+                        <!-- 2. MONITOR DROPDOWN -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm text-light fw-semibold px-3 py-1 dropdown-toggle d-flex align-items-center gap-1 {% if 'disaster' in request.path or 'risk' in request.path or 'map' in request.path or 'population' in request.path or 'drone' in request.path %}bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50{% endif %}" type="button" data-bs-toggle="dropdown">
+                                <i data-lucide="activity" style="width: 15px; height: 15px;"></i> MONITOR
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark shadow-lg border border-secondary border-opacity-25">
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if 'disaster' in request.path %}active{% endif %}" href="{% url 'disasters_list' %}"><i data-lucide="activity" style="width: 14px; height: 14px;"></i> Disaster Monitor</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'risk_prediction' %}active{% endif %}" href="{% url 'risk_prediction' %}"><i data-lucide="cpu" style="width: 14px; height: 14px;"></i> Risk Prediction</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'map' %}active{% endif %}" href="{% url 'map' %}"><i data-lucide="map" style="width: 14px; height: 14px;"></i> GIS Risk Map</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'population' %}active{% endif %}" href="{% url 'population' %}"><i data-lucide="users" style="width: 14px; height: 14px;"></i> Population</a></li>
+                                {% if USER_ROLE == 'ADMIN' or user.is_superuser %}
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'drone_view' %}active{% endif %}" href="{% url 'drone_view' %}"><i data-lucide="camera" style="width: 14px; height: 14px;"></i> Drone View</a></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                        <!-- 3. RESPONSE DROPDOWN -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm text-light fw-semibold px-3 py-1 dropdown-toggle d-flex align-items-center gap-1 {% if 'alert' in request.path or 'evacuation' in request.path or 'shelter' in request.path or 'resource' in request.path %}bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50{% endif %}" type="button" data-bs-toggle="dropdown">
+                                <i data-lucide="shield-alert" style="width: 15px; height: 15px;"></i> RESPONSE
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark shadow-lg border border-secondary border-opacity-25">
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center justify-content-between {% if request.resolver_match.url_name == 'alerts' %}active{% endif %}" href="{% url 'alerts' %}">
+                                        <span><i data-lucide="bell" class="me-2" style="width: 14px; height: 14px;"></i> Alert</span>
+                                        {% if ACTIVE_ALERTS_COUNT > 0 %}
+                                        <span class="badge bg-danger ms-2">{{ ACTIVE_ALERTS_COUNT }}</span>
+                                        {% endif %}
+                                    </a>
+                                </li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'evacuation' %}active{% endif %}" href="{% url 'evacuation' %}"><i data-lucide="navigation" style="width: 14px; height: 14px;"></i> Evacuation</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'shelters' %}active{% endif %}" href="{% url 'shelters' %}"><i data-lucide="home" style="width: 14px; height: 14px;"></i> Shelter</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'resources' %}active{% endif %}" href="{% url 'resources' %}"><i data-lucide="box" style="width: 14px; height: 14px;"></i> Resource</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- 4. INTELLIGENCE DROPDOWN -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm text-light fw-semibold px-3 py-1 dropdown-toggle d-flex align-items-center gap-1 {% if 'assistant' in request.path or 'satellite' in request.path or 'reports' in request.path %}bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50{% endif %}" type="button" data-bs-toggle="dropdown">
+                                <i data-lucide="bot" style="width: 15px; height: 15px;"></i> INTELLIGENCE
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark shadow-lg border border-secondary border-opacity-25">
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'assistant' %}active{% endif %}" href="{% url 'assistant' %}"><i data-lucide="bot" style="width: 14px; height: 14px;"></i> AI Assistant</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'satellite' %}active{% endif %}" href="{% url 'satellite' %}"><i data-lucide="orbit" style="width: 14px; height: 14px;"></i> Satellite Lab</a></li>
+                                {% if USER_ROLE == 'ADMIN' or user.is_superuser %}
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'reports' %}active{% endif %}" href="{% url 'reports' %}"><i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Reports</a></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                        <!-- 5. SYSTEM DROPDOWN -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm text-light fw-semibold px-3 py-1 dropdown-toggle d-flex align-items-center gap-1 {% if 'setting' in request.path or 'admin' in request.path %}bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50{% endif %}" type="button" data-bs-toggle="dropdown">
+                                <i data-lucide="settings" style="width: 15px; height: 15px;"></i> SYSTEM
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark shadow-lg border border-secondary border-opacity-25">
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'settings' %}active{% endif %}" href="{% url 'settings' %}"><i data-lucide="settings" style="width: 14px; height: 14px;"></i> Settings</a></li>
+                                {% if USER_ROLE == 'ADMIN' %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-warning fw-bold d-flex align-items-center gap-2" href="{% url 'admin_dashboard' %}"><i data-lucide="shield-check" style="width: 14px; height: 14px;"></i> Admin Command</a></li>
+                                {% elif USER_ROLE == 'EMERGENCY_OPERATOR' %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-info fw-bold d-flex align-items-center gap-2" href="{% url 'operator_dashboard' %}"><i data-lucide="radio" style="width: 14px; height: 14px;"></i> Operator Desk</a></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </nav>
+                </div>
+
+                <!-- Right Controls & User Profile -->
+                <div class="d-flex align-items-center gap-2 gap-lg-3">
+                    <!-- Demo Mode / Live Mode Status Badge (Admin Only) -->
+                    {% if USER_ROLE == 'ADMIN' or user_role == 'ADMIN' or user.profile.role == 'ADMIN' or user.is_superuser or user.is_staff %}
+                        {% if DEMO_MODE %}
+                        <span class="badge badge-demo d-none d-md-inline-block">🟠 DEMO MODE</span>
+                        {% else %}
+                        <span class="badge badge-live d-none d-md-inline-block">🟢 LIVE MODE</span>
+                        {% endif %}
+                    {% endif %}
+
+                    <!-- Navbar Location Search Control -->
+                    <form id="navLocationSearchForm" class="d-flex align-items-center me-1 position-relative" style="max-width: 220px;" onsubmit="event.preventDefault(); handleNavLocationSearchSubmit(event); return false;">
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="navSearchInput" class="form-control bg-dark text-light border-secondary" placeholder="Search pages or locations..." style="font-size: 0.78rem;" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="navSearchAutocomplete" required>
+                            <button type="submit" class="btn btn-outline-info border-secondary py-0 px-2" id="btnNavSearch" title="Search pages or locations">
+                                <i data-lucide="search" style="width: 14px; height: 14px;"></i>
+                            </button>
+                        </div>
+                        <div id="navSearchAutocomplete" role="listbox" class="dropdown-menu dropdown-menu-dark shadow-lg w-100 position-absolute mt-1" style="display: none; top: 100%; left: 0; max-height: 280px; overflow-y: auto; z-index: 1050; font-size: 0.75rem;"></div>
+                    </form>
+
+
+                    <!-- Alerts Quick Button -->
+                    <a href="{% url 'alerts' %}" class="btn btn-sm btn-dark position-relative border border-secondary" title="View Active Alerts">
+                        <i data-lucide="bell" style="width: 16px; height: 16px;"></i>
+                        {% if ACTIVE_ALERTS_COUNT > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+                        {% endif %}
+                    </a>
+
+                    <!-- User Profile Dropdown -->
+                    {% if user.is_authenticated %}
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+                            <i data-lucide="user" style="width: 16px; height: 16px;"></i>
+                            <span class="d-none d-md-inline">{{ user.username }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark shadow-lg border border-secondary border-opacity-25">
+                            <li><h6 class="dropdown-header">{{ user.profile.organization|default:"Disaster Management" }}</h6></li>
+                            <li><a class="dropdown-item" href="{% url 'settings' %}"><i data-lucide="sliders" class="me-2" style="width: 14px; height: 14px;"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i data-lucide="log-out" class="me-2" style="width: 14px; height: 14px;"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-sm btn-primary">Login</a>
+                    {% endif %}
+
+                    <!-- Mobile Navigation Menu Button -->
+                    <button class="btn btn-outline-secondary d-xl-none py-1 px-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNavOffcanvas" aria-controls="mobileNavOffcanvas" aria-label="Open navigation menu">
+                        <i data-lucide="menu" style="width: 20px; height: 20px;"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Responsive Offcanvas Menu for Mobile & Tablet -->
+            <div class="offcanvas offcanvas-start bg-dark text-light border-end border-secondary border-opacity-25" tabindex="-1" id="mobileNavOffcanvas" aria-labelledby="mobileNavOffcanvasLabel">
+                <div class="offcanvas-header border-bottom border-secondary border-opacity-25">
+                    <h5 class="offcanvas-title d-flex align-items-center gap-2" id="mobileNavOffcanvasLabel">
+                        <div class="bg-primary text-white p-1 rounded-3 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i data-lucide="shield-alert" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <span class="fw-bold text-white">RUDRAM Navigation</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body">
+                    <div class="list-group list-group-flush bg-transparent">
+                        <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 fw-semibold d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'dashboard' %}text-primary{% endif %}">
+                            <i data-lucide="home" style="width: 18px; height: 18px;"></i> HOME
+                        </a>
+
+                        <!-- MONITOR -->
+                        <div class="text-secondary small fw-bold text-uppercase mt-3 mb-1 tracking-wide" style="font-size: 0.7rem;">Monitor</div>
+                        <a href="{% url 'disasters_list' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="activity" style="width: 16px; height: 16px;"></i> Disaster Monitor</a>
+                        <a href="{% url 'risk_prediction' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="cpu" style="width: 16px; height: 16px;"></i> Risk Prediction</a>
+                        <a href="{% url 'map' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="map" style="width: 16px; height: 16px;"></i> GIS Risk Map</a>
+                        <a href="{% url 'population' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="users" style="width: 16px; height: 16px;"></i> Population</a>
+                        {% if USER_ROLE == 'ADMIN' or user.is_superuser %}
+                        <a href="{% url 'drone_view' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="camera" style="width: 16px; height: 16px;"></i> Drone View</a>
+                        {% endif %}
+
+                        <!-- RESPONSE -->
+                        <div class="text-secondary small fw-bold text-uppercase mt-3 mb-1 tracking-wide" style="font-size: 0.7rem;">Response</div>
+                        <a href="{% url 'alerts' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="bell" style="width: 16px; height: 16px;"></i> Alert</a>
+                        <a href="{% url 'evacuation' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="navigation" style="width: 16px; height: 16px;"></i> Evacuation</a>
+                        <a href="{% url 'shelters' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="home" style="width: 16px; height: 16px;"></i> Shelter</a>
+                        <a href="{% url 'resources' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="box" style="width: 16px; height: 16px;"></i> Resource</a>
+
+                        <!-- INTELLIGENCE -->
+                        <div class="text-secondary small fw-bold text-uppercase mt-3 mb-1 tracking-wide" style="font-size: 0.7rem;">Intelligence</div>
+                        <a href="{% url 'assistant' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="bot" style="width: 16px; height: 16px;"></i> AI Assistant</a>
+                        <a href="{% url 'satellite' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="orbit" style="width: 16px; height: 16px;"></i> Satellite Lab</a>
+                        {% if USER_ROLE == 'ADMIN' or user.is_superuser %}
+                        <a href="{% url 'reports' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="file-text" style="width: 16px; height: 16px;"></i> Reports</a>
+                        {% endif %}
+
+                        <!-- SYSTEM -->
+                        <div class="text-secondary small fw-bold text-uppercase mt-3 mb-1 tracking-wide" style="font-size: 0.7rem;">System</div>
+                        <a href="{% url 'settings' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="settings" style="width: 16px; height: 16px;"></i> Settings</a>
+                        {% if USER_ROLE == 'ADMIN' or user.is_superuser %}
+                        <a href="{% url 'admin_dashboard' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="shield-check" style="width: 16px; height: 16px;"></i> Admin Command</a>
+                        {% elif USER_ROLE == 'EMERGENCY_OPERATOR' %}
+                        <a href="{% url 'operator_dashboard' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="radio" style="width: 16px; height: 16px;"></i> Operator Desk</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Toast Container -->
+            <div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 2000;" aria-live="polite" aria-atomic="true"></div>
+
+            <!-- Page Content Container -->
+            <div class="container-fluid p-3 p-lg-4" id="page-content" tabindex="-1">
+                {% if request.resolver_match and SEO_PAGE_TITLE != 'Disaster intelligence dashboard' %}
+                <nav aria-label="Breadcrumb" class="mb-3">
+                    <ol class="breadcrumb small mb-0">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ SEO_PAGE_TITLE }}</li>
+                    </ol>
+                </nav>
+                {% endif %}
+                {% if request.resolver_match %}
+                <h1 class="h4 fw-bold mb-3">{% block page_heading %}RUDRAM 2.0 Disaster Intelligence{% endblock %}</h1>
+                {% endif %}
+                <!-- System Alerts / Django Messages -->
+                {% if messages %}
+                <div class="mb-3">
+                    {% for message in messages %}
+                    <div class="alert alert-{% if 'error' in message.tags %}danger{% elif 'success' in message.tags %}success{% elif 'warning' in message.tags %}warning{% elif 'info' in message.tags %}info{% else %}secondary{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </div>
+
+            <footer class="site-footer mx-3 mx-lg-4 mb-4 p-3 p-lg-4" id="site-footer" aria-label="RUDRAM contact information">
+                <div class="site-footer-brand">
+                    <a href="{% url 'dashboard' %}" aria-label="RUDRAM home">
+                        <img src="/static/images/rudram-logo.png" alt="RUDRAM 2.0 Disaster Intelligence" class="site-footer-logo">
+                    </a>
+                    <span class="small">RUDRAM 2.0 &middot; Disaster Intelligence</span>
+                </div>
+                <div class="site-footer-contact">
+                    <h2 class="h6 fw-bold mb-2">Contact</h2>
+                    <div class="site-footer-details">
+                        <div>
+                            <h3 class="small fw-semibold mb-1">Email</h3>
+                            <a href="mailto:ratikantas512@gmail.com">ratikantas512@gmail.com</a>
+                            <a href="mailto:rohitdey2024r@gmail.com">rohitdey2024r@gmail.com</a>
+                            <a href="mailto:mekapgyanaranjan99@gmail.com">mekapgyanaranjan99@gmail.com</a>
+                            <a href="mailto:gurucharanparida4@gmail.com">gurucharanparida4@gmail.com</a>
+                        </div>
+                        <div>
+                            <h3 class="small fw-semibold mb-1">Phone</h3>
+                            <a href="tel:9078835620">9078835620</a>
+                            <a href="tel:9861640459">9861640459</a>
+                            <a href="tel:9668382391">9668382391</a>
+                            <a href="tel:9124024230">9124024230</a>
+                        </div>
+                    </div>
+                    <details class="site-faq mt-3">
+                        <summary class="fw-semibold">Quick help</summary>
+                        <div class="site-faq-answer">
+                            <p class="mb-2">Where can I find current emergency alerts?</p>
+                            <a href="{% url 'alerts' %}">View active alerts</a>
+                            <p class="mb-2 mt-3">How do I locate a safe shelter?</p>
+                            <a href="{% url 'shelters' %}">Find emergency shelters</a>
+                        </div>
+                    </details>
+                </div>
+                <div class="site-footer-tools">
+                    <time class="site-footer-updated small" datetime="{% now 'c' %}">Last updated: {% now "M j, Y" %}</time>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="copyPageLink">
+                            <i data-lucide="copy" class="me-1" style="width: 14px; height: 14px;"></i>Copy page link
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+                            <i data-lucide="printer" class="me-1" style="width: 14px; height: 14px;"></i>Print
+                        </button>
+                    </div>
+                    <p class="site-footer-copyright mb-0 small mt-3">&copy; {% now "Y" %} RUDRAM 2.0. All rights reserved.</p>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <a class="floating-contact" href="#site-footer" aria-label="Contact RUDRAM">
+        <i data-lucide="mail" aria-hidden="true"></i>
+        <span>Contact</span>
+    </a>
+    <button class="back-to-top" id="backToTop" type="button" aria-label="Back to top" hidden>
+        <i data-lucide="arrow-up" aria-hidden="true"></i>
+    </button>
+
+    <section class="cookie-banner" id="cookieBanner" aria-label="Cookie and campaign tracking preferences" hidden>
+        <div>
+            <strong>Privacy choices</strong>
+            <p class="mb-0 small">Essential cookies keep your session secure. Optional campaign tracking stores UTM tags in a first-party cookie only if you allow it.</p>
+        </div>
+        <div class="cookie-banner-actions">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="cookieEssentialOnly">Essential only</button>
+            <button type="button" class="btn btn-sm btn-primary" id="cookieAcceptTracking">Allow optional tracking</button>
+        </div>
+    </section>
+
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="confirmationModalTitle">Confirm this action</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cancel"></button>
+                </div>
+                <div class="modal-body" id="confirmationMessage"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmActionButton">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global Bootstrap Modal Backdrop Cleanup & Focus Release
+        function cleanupStaleModalBackdrops() {
+            const openModals = document.querySelectorAll('.modal.show');
+            if (openModals.length === 0) {
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('overflow');
+                document.body.style.removeProperty('padding-right');
+            }
+        }
+
+        document.addEventListener('hide.bs.modal', function (e) {
+            if (e.target && e.target.contains(document.activeElement)) {
+                document.activeElement.blur();
+            }
+        });
+
+        document.addEventListener('hidden.bs.modal', function (e) {
+            if (e.target && e.target.contains(document.activeElement)) {
+                document.activeElement.blur();
+            }
+            cleanupStaleModalBackdrops();
+        });
+
+        document.addEventListener('DOMContentLoaded', cleanupStaleModalBackdrops);
+    </script>
+    
+    <!-- Environment Config for GIS Base Layer -->
+    <script>
+        window.RUDRAM_CONFIG = window.RUDRAM_CONFIG || {};
+        window.RUDRAM_CONFIG.CARTO_BASEMAP_API_KEY = "{{ CARTO_BASEMAP_API_KEY|escapejs }}";
+        window.CARTO_BASEMAP_API_KEY = "{{ CARTO_BASEMAP_API_KEY|escapejs }}";
+    </script>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom Client JS -->
+    <script src="/static/js/main.js?v=1.2"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

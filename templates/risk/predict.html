@@ -1,0 +1,753 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM - AI Flood Risk Prediction Engine{% endblock %}
+{% block meta_description %}Assess location-based flood risk using rainfall, terrain, river levels, and predictive analytics in RUDRAM.{% endblock %}
+{% block page_heading %}AI Flood Risk Prediction & SHAP Factor Breakdown{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Input Parameter Studio Form -->
+    <div class="col-lg-5">
+        <div class="rudram-card">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom border-secondary border-opacity-25 pb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i data-lucide="sliders" class="text-info" style="width: 20px; height: 20px;"></i>
+                    <h6 class="fw-bold mb-0 text-white">Hydrological & Environmental Inputs</h6>
+                </div>
+                <button class="btn btn-sm btn-outline-info py-0" type="button" onclick="fetchLiveEnvironmentalTelemetry()"><i data-lucide="refresh-cw" style="width: 13px; height: 13px;" class="me-1"></i>Fetch Live Telemetry</button>
+            </div>
+
+            <form id="riskPredictionForm">
+                {% csrf_token %}
+                <div class="row g-2 mb-3">
+                    <div class="col-12 position-relative">
+                        <label class="form-label small text-secondary fw-semibold">Search Location (Worldwide)</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="locName" class="form-control bg-dark border-secondary text-light" placeholder="Search city, town, district, region or landmark..." autocomplete="off" oninput="handleRiskLocationInput(event)">
+                            <button class="btn btn-outline-info" type="button" onclick="triggerRiskLocationSearch()" title="Search Location"><i data-lucide="search" style="width: 14px; height: 14px;"></i></button>
+                            <button class="btn btn-info font-monospace text-dark fw-bold d-flex align-items-center gap-1" type="button" id="btnUseCurrentLoc" onclick="useCurrentLocation()">
+                                <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i> Use Current Location
+                            </button>
+                        </div>
+                        <div id="riskLocSearchResults" class="dropdown-menu dropdown-menu-dark w-100 shadow-lg mt-1" style="display: none; max-height: 250px; overflow-y: auto; z-index: 1050;"></div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-secondary">Latitude</label>
+                        <input type="number" step="0.0001" id="lat" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Lat (-90 to 90)">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-secondary">Longitude</label>
+                        <input type="number" step="0.0001" id="lon" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Lon (-180 to 180)">
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label small text-secondary">Current Rain Rate (mm/hr)</label>
+                        <input type="number" id="rainCurr" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Auto-filled live" step="0.1">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-secondary">24-Hour Rainfall (mm)</label>
+                        <input type="number" id="rain24h" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Auto-filled live" step="0.1">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-secondary">7-Day Antecedent Rain (mm)</label>
+                        <input type="number" id="rain7d" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Auto-filled live" step="0.1">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-secondary">24h Forecast Rain (mm)</label>
+                        <input type="number" id="rainFc" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Auto-filled live" step="0.1">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small text-secondary">Temperature (°C)</label>
+                        <input type="number" id="tempC" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Auto-filled live" step="0.1">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small text-secondary">Humidity (%)</label>
+                        <input type="number" id="humidityPct" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Auto-filled live" step="0.1">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small text-secondary">Wind Speed (km/h)</label>
+                        <input type="number" id="windKmh" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Auto-filled live" step="0.1">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-secondary">Elevation (m a.s.l.)</label>
+                        <input type="number" id="elev" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Leave blank if unmeasured" step="1">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-secondary">Distance to River (km)</label>
+                        <input type="number" step="0.1" id="distWater" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Leave blank if unmeasured">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-secondary">River Gauge Level (m)</label>
+                        <input type="number" step="0.1" id="riverLevel" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Leave blank if unmeasured">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-secondary">Soil Saturation Index (0-1)</label>
+                        <input type="number" step="0.01" id="soilMoist" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Leave blank if unmeasured">
+                    </div>
+                </div>
+
+                <!-- Data Source Telemetry Information -->
+                <div class="p-3 bg-dark bg-opacity-75 rounded border border-secondary border-opacity-25 small mb-3" id="dataSourceInfoCard">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="fw-bold text-secondary text-uppercase tracking-wide" style="font-size: 0.75rem;"><i data-lucide="database" class="me-1" style="width: 14px; height: 14px;"></i> DATA SOURCE TELEMETRY</span>
+                        <span class="badge bg-secondary font-monospace" id="telemetryStatusBadge">AWAITING SELECTION</span>
+                    </div>
+                    <div class="row g-2 text-secondary" style="font-size: 0.78rem;">
+                        <div class="col-6">Location Source: <strong class="text-light" id="srcLocationName">None selected</strong></div>
+                        <div class="col-6">Weather API: <strong class="text-light" id="srcWeatherApi">Open-Meteo</strong></div>
+                        <div class="col-6">Mode: <strong class="text-light" id="srcDataMode">{% if DEMO_MODE %}DEMO DATA{% else %}LIVE DATA{% endif %}</strong></div>
+                        <div class="col-6">Last Updated: <strong class="text-light" id="srcLastUpdated">--</strong></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-2" id="btnRunInference">
+                    <i data-lucide="cpu" style="width: 18px; height: 18px;"></i>
+                    RUN XGBOOST & RANDOM FOREST INFERENCE
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- AI Output & Explainability Panel -->
+    <div class="col-lg-7">
+        <div id="riskResultCard" class="rudram-card mb-4" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(239, 68, 68, 0.1) 100%);">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom border-secondary border-opacity-25 pb-2">
+                <div>
+                    <h5 class="fw-bold mb-0 text-white" id="outLocationName">Select a Location Above</h5>
+                    <div class="small text-secondary" id="outModelMode">Model: Multi-Disaster XGBoost / RF Estimator</div>
+                </div>
+                <span class="badge bg-secondary fs-6" id="outRiskBadge">AWAITING SELECTION</span>
+            </div>
+
+            <!-- Score Gauges -->
+            <div class="row g-3 mb-4 text-center">
+                <div class="col-4">
+                    <div class="p-2 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25">
+                        <div class="small text-secondary">Risk Score</div>
+                        <div class="fs-3 fw-bold text-danger" id="outScoreVal">--</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25">
+                        <div class="small text-secondary">Model Confidence</div>
+                        <div class="fs-3 fw-bold text-info" id="outConfidenceVal">--</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25">
+                        <div class="small text-secondary">Decision</div>
+                        <div class="fs-4 fw-bold text-secondary" id="outDecisionVal">WAITING</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Directive -->
+            <div class="alert alert-secondary border-secondary border-opacity-50 small mb-4" id="outActionDirective">
+                Select or search a location above to load live environmental telemetry and execute risk inference.
+            </div>
+
+            <!-- Explainable Feature Contribution Table -->
+            <h6 class="fw-bold small text-uppercase text-secondary mb-2">Explainable Hydrological Contributing Factors</h6>
+            <div class="table-responsive">
+                <table class="table table-river-status table-sm small mb-0">
+                    <thead>
+                        <tr class="text-secondary">
+                            <th>Feature Parameter</th>
+                            <th>Observed Value</th>
+                            <th>Risk Contribution</th>
+                            <th>Physical Mechanism</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contributingFactorsList">
+                        <tr><td colspan="4" class="text-muted text-center py-3">Awaiting location selection and telemetry fetch...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Predictions Log -->
+        <div class="rudram-card">
+            <h6 class="fw-bold mb-3 small text-uppercase text-secondary">Historical Prediction Logs</h6>
+            <div class="table-responsive">
+                <table class="table table-river-status table-hover table-sm small mb-0">
+                    <thead>
+                        <tr class="text-secondary">
+                            <th>Location</th>
+                            <th>Risk Score</th>
+                            <th>Level</th>
+                            <th>Rainfall</th>
+                            <th>Elevation</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pred in latest_predictions %}
+                        <tr>
+                            <td><strong>{{ pred.location_name }}</strong></td>
+                            <td><strong>{{ pred.risk_score }}%</strong></td>
+                            <td><span class="badge badge-risk-{{ pred.risk_level|lower }}">{{ pred.risk_level }}</span></td>
+                            <td>{{ pred.rainfall_24h_mm }} mm</td>
+                            <td>{{ pred.elevation_m }} m</td>
+                            <td>{{ pred.created_at|timesince }} ago</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-muted text-center py-3">No logged predictions yet. Run your first inference above!</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentRiskFetchReqId = 0;
+let riskSearchDebounceTimer = null;
+
+// Safe Numeric Input Validation Helper
+function getValidNumber(inputEl, fieldName, required = false) {
+    if (!inputEl) return null;
+    const value = (inputEl.value || '').trim();
+
+    if (value === "") {
+        if (required) {
+            throw new Error(`${fieldName} is required.`);
+        }
+        return null;
+    }
+
+    const number = Number(value);
+
+    if (!Number.isFinite(number)) {
+        throw new Error(`${fieldName} must be a valid number.`);
+    }
+
+    return number;
+}
+
+// Safe Numeric Coordinate Extractor & Bounds Validation
+function extractAndValidateCoordinate(val, minVal, maxVal) {
+    if (val === null || val === undefined || val === '') return null;
+    const num = Number(val);
+    if (Number.isFinite(num) && num >= minVal && num <= maxVal) {
+        return num;
+    }
+    return null;
+}
+
+// Multi-schema Coordinate Property Extraction
+function extractCoordinatesFromPlace(obj) {
+    if (!obj || typeof obj !== 'object') return { lat: null, lon: null };
+
+    const rawLat = obj.latitude !== undefined ? obj.latitude :
+                   (obj.lat !== undefined ? obj.lat :
+                   (obj.coords ? obj.coords.latitude || obj.coords.lat :
+                   (obj.geometry && obj.geometry.location ? obj.geometry.location.lat : undefined)));
+
+    const rawLon = obj.longitude !== undefined ? obj.longitude :
+                   (obj.lon !== undefined ? obj.lon :
+                   (obj.lng !== undefined ? obj.lng :
+                   (obj.coords ? obj.coords.longitude || obj.coords.lon || obj.coords.lng :
+                   (obj.geometry && obj.geometry.location ? obj.geometry.location.lng || obj.geometry.location.lon : undefined))));
+
+    const validLat = extractAndValidateCoordinate(rawLat, -90, 90);
+    const validLon = extractAndValidateCoordinate(rawLon, -180, 180);
+
+    return { lat: validLat, lon: validLon };
+}
+
+// Global Nav Search Result Receiver
+window.handleSearchedLocation = function handleSearchedLocation(geoData) {
+    const locName = geoData.display_name || geoData.place_name || "Selected Location";
+    const coords = extractCoordinatesFromPlace(geoData);
+
+    if (coords.lat !== null && coords.lon !== null) {
+        selectRiskLocation(locName, coords.lat, coords.lon, "Global Nav Geocoder");
+    } else {
+        showToast("Location coordinates are unavailable. Please select another location.", "warning");
+    }
+};
+
+// Handle Inline Location Autocomplete Search with Debouncing (350ms)
+function handleRiskLocationInput(event) {
+    clearTimeout(riskSearchDebounceTimer);
+    const query = event.target.value.trim();
+    const dropdown = document.getElementById('riskLocSearchResults');
+    if (!dropdown) return;
+
+    if (query.length < 2) {
+        dropdown.style.display = 'none';
+        return;
+    }
+
+    riskSearchDebounceTimer = setTimeout(async () => {
+        try {
+            dropdown.innerHTML = '<div class="dropdown-item small text-info py-2"><span class="spinner-border spinner-border-sm me-2"></span>Finding location...</div>';
+            dropdown.style.display = 'block';
+
+            const res = await fetch(`/api/location/search/?q=${encodeURIComponent(query)}`);
+            let data = {};
+            try { data = await res.json(); } catch(e) {}
+
+            if (res.ok) {
+                if (data.results && data.results.length > 0) {
+                    renderRiskLocationSearchResults(data.results);
+                } else {
+                    dropdown.innerHTML = '<div class="dropdown-item small text-muted py-2">No matching locations found.</div>';
+                    dropdown.style.display = 'block';
+                }
+            } else {
+                const errMsg = data.message || data.detail || "Location search service temporarily unavailable.";
+                dropdown.innerHTML = `<div class="dropdown-item small text-warning py-2">${errMsg}</div>`;
+                dropdown.style.display = 'block';
+            }
+        } catch (e) {
+            console.warn("Location search error:", e);
+            dropdown.innerHTML = '<div class="dropdown-item small text-danger py-2">Network failure. Please check connection.</div>';
+            dropdown.style.display = 'block';
+        }
+    }, 350);
+}
+
+function renderRiskLocationSearchResults(results) {
+    const dropdown = document.getElementById('riskLocSearchResults');
+    if (!dropdown) return;
+
+    dropdown.innerHTML = '';
+    if (!Array.isArray(results) || results.length === 0) {
+        dropdown.innerHTML = '<div class="dropdown-item small text-muted py-2">No matching locations found.</div>';
+        dropdown.style.display = 'block';
+        return;
+    }
+
+    results.forEach(res => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'dropdown-item small text-wrap border-bottom border-secondary border-opacity-25 py-2';
+        const placeName = res.place_name || res.display_name || res.name || 'Selected Place';
+        const coords = extractCoordinatesFromPlace(res);
+
+        const coordsText = (coords.lat !== null && coords.lon !== null)
+            ? `Lat: ${coords.lat.toFixed(4)}°, Lon: ${coords.lon.toFixed(4)}°`
+            : 'Coordinates unavailable';
+
+        item.innerHTML = `
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <strong class="text-white">${placeName}</strong>
+                <span class="badge bg-info text-dark">Select</span>
+            </div>
+            <div class="text-muted" style="font-size: 0.7rem;">${coordsText}</div>
+        `;
+
+        item.onclick = () => {
+            dropdown.style.display = 'none';
+            selectRiskLocation(placeName, coords.lat, coords.lon, res.source || 'OpenStreetMap Nominatim Geocoder');
+        };
+
+        dropdown.appendChild(item);
+    });
+
+    dropdown.style.display = 'block';
+}
+
+function triggerRiskLocationSearch() {
+    const input = document.getElementById('locName');
+    if (input && input.value.trim()) {
+        handleRiskLocationInput({ target: input });
+    }
+}
+
+// Location Selection Handler (Safe Assignment - No NaN Ever Assigned)
+function selectRiskLocation(name, rawLat, rawLon, locSource = 'Search Geocoder') {
+    const lat = extractAndValidateCoordinate(rawLat, -90, 90);
+    const lon = extractAndValidateCoordinate(rawLon, -180, 180);
+
+    const latInput = document.getElementById('lat');
+    const lonInput = document.getElementById('lon');
+    const locInput = document.getElementById('locName');
+
+    if (locInput) locInput.value = name || '';
+
+    if (lat !== null && lon !== null) {
+        if (latInput) latInput.value = lat.toFixed(4);
+        if (lonInput) lonInput.value = lon.toFixed(4);
+
+        const srcLoc = document.getElementById('srcLocationName');
+        if (srcLoc) srcLoc.innerText = locSource;
+
+        fetchLiveEnvironmentalTelemetry(lat, lon, name);
+    } else {
+        if (latInput) latInput.value = '';
+        if (lonInput) lonInput.value = '';
+
+        showToast('Location coordinates are unavailable. Please select another location.', 'warning');
+    }
+}
+
+// Use Browser Geolocation (Current Location Button)
+async function useCurrentLocation() {
+    if (!navigator.geolocation) {
+        showToast('Geolocation is not supported by your browser.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btnUseCurrentLoc');
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Locating...';
+
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            const rawLat = position.coords ? position.coords.latitude : undefined;
+            const rawLon = position.coords ? position.coords.longitude : undefined;
+
+            const lat = extractAndValidateCoordinate(rawLat, -90, 90);
+            const lon = extractAndValidateCoordinate(rawLon, -180, 180);
+
+            if (lat === null || lon === null) {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                if (window.lucide) lucide.createIcons();
+                showToast('Location coordinates are unavailable. Please select another location.', 'warning');
+                return;
+            }
+
+            let placeName = `Current Position (${lat.toFixed(4)}°, ${lon.toFixed(4)}°)`;
+            let locSource = 'Device GPS Geolocation';
+
+            try {
+                const geoRes = await fetch(`/api/location/geocode/?lat=${lat}&lon=${lon}`);
+                if (geoRes.ok) {
+                    const geoData = await geoRes.json();
+                    if (geoData.display_name || geoData.place_name || geoData.name) {
+                        placeName = geoData.display_name || geoData.place_name || geoData.name;
+                        locSource = 'GPS + Reverse Geocoder';
+                    }
+                }
+            } catch (e) {
+                console.warn("Reverse geocoding error:", e);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+            if (window.lucide) lucide.createIcons();
+
+            selectRiskLocation(placeName, lat, lon, locSource);
+        },
+        (error) => {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+            if (window.lucide) lucide.createIcons();
+
+            if (error.code === error.PERMISSION_DENIED) {
+                showToast('Location permission was denied. You can search for a location manually.', 'warning');
+            } else {
+                showToast('Unable to retrieve current location. Please search manually.', 'error');
+            }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+}
+
+// Fetch Live Environmental Telemetry from Open-Meteo & Run ML Inference
+async function fetchLiveEnvironmentalTelemetry(explicitLat, explicitLon, explicitName) {
+    const reqId = ++currentRiskFetchReqId;
+    const latInput = document.getElementById('lat');
+    const lonInput = document.getElementById('lon');
+
+    let lat = null;
+    let lon = null;
+
+    try {
+        lat = explicitLat !== undefined ? extractAndValidateCoordinate(explicitLat, -90, 90) : getValidNumber(latInput, 'Latitude', true);
+        lon = explicitLon !== undefined ? extractAndValidateCoordinate(explicitLon, -180, 180) : getValidNumber(lonInput, 'Longitude', true);
+    } catch(err) {
+        showToast(err.message, 'warning');
+        return;
+    }
+
+    const locName = explicitName || document.getElementById('locName').value.trim() || "Selected Location";
+
+    if (lat === null || lon === null || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        showToast('Please select a valid location with Latitude (-90 to 90) and Longitude (-180 to 180).', 'warning');
+        return;
+    }
+
+    // Telemetry Status Badge
+    const badge = document.getElementById('telemetryStatusBadge');
+    if (badge) {
+        badge.className = 'badge bg-warning text-dark font-monospace';
+        badge.innerText = 'FETCHING LIVE DATA...';
+    }
+
+    const btn = document.getElementById('btnRunInference');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Fetching Live Weather & Running ML Model...';
+    }
+
+    try {
+        const [currRes, foreRes] = await Promise.all([
+            fetch(`/api/weather/current/?latitude=${lat}&longitude=${lon}`),
+            fetch(`/api/weather/forecast/?latitude=${lat}&longitude=${lon}&forecast_days=7`)
+        ]);
+
+        if (reqId !== currentRiskFetchReqId) return;
+
+        let currRain = null;
+        let rain24h = null;
+        let rain7d = null;
+        let rainFc = null;
+        let tempC = null;
+        let humidity = null;
+        let windKmh = null;
+        let elev = null;
+
+        if (currRes.ok) {
+            const currData = await currRes.json();
+            if (currData.success && currData.current) {
+                const c = currData.current;
+                currRain = extractAndValidateCoordinate(c.rainfall, 0, 2000);
+                rain24h = extractAndValidateCoordinate(c.rainfall_24h, 0, 5000) || currRain;
+                tempC = extractAndValidateCoordinate(c.temperature, -60, 70);
+                humidity = extractAndValidateCoordinate(c.humidity, 0, 100);
+                windKmh = extractAndValidateCoordinate(c.wind_speed, 0, 500);
+                elev = extractAndValidateCoordinate(c.elevation_m, -500, 9000);
+            }
+        } else {
+            let errData = {};
+            try { errData = await currRes.json(); } catch(e) {}
+            console.error("Weather API Error:", currRes.status, errData);
+        }
+
+        if (foreRes.ok) {
+            const foreData = await foreRes.json();
+            if (foreData.success && foreData.hourly) {
+                const hourly = foreData.hourly;
+                const prec = hourly.precipitation || hourly.rain || [];
+                if (prec.length > 0) {
+                    const validPrec = prec.map(p => Number.isFinite(Number(p)) ? Number(p) : 0);
+                    rainFc = validPrec.slice(0, 24).reduce((a, b) => a + b, 0);
+                    if (rain7d === null) {
+                        rain7d = validPrec.slice(0, 168).reduce((a, b) => a + b, 0);
+                    }
+                }
+            }
+        }
+
+        // AUTO-FILL ONLY VALID LIVE METRICS (Leave unmeasured values BLANK)
+        document.getElementById('rainCurr').value = currRain !== null ? currRain.toFixed(1) : '';
+        document.getElementById('rain24h').value = rain24h !== null ? rain24h.toFixed(1) : '';
+        document.getElementById('rain7d').value = rain7d !== null ? rain7d.toFixed(1) : '';
+        document.getElementById('rainFc').value = rainFc !== null ? rainFc.toFixed(1) : '';
+        document.getElementById('tempC').value = tempC !== null ? tempC.toFixed(1) : '';
+        document.getElementById('humidityPct').value = humidity !== null ? Math.round(humidity) : '';
+        document.getElementById('windKmh').value = windKmh !== null ? windKmh.toFixed(1) : '';
+        document.getElementById('elev').value = elev !== null ? Math.round(elev) : '';
+
+        // DATA SOURCE RULE: Unmeasured fields (distWater, riverLevel, soilMoist) remain BLANK if not set by user!
+
+        // Update Timestamps & Source Badge
+        const now = new Date();
+        const timeStr = now.getFullYear() + '-' +
+            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+            String(now.getDate()).padStart(2, '0') + ' ' +
+            String(now.getHours()).padStart(2, '0') + ':' +
+            String(now.getMinutes()).padStart(2, '0');
+
+        if (badge) {
+            badge.className = 'badge bg-success font-monospace';
+            badge.innerText = 'LIVE DATA CONNECTED';
+        }
+        const lastUpdEl = document.getElementById('srcLastUpdated');
+        if (lastUpdEl) lastUpdEl.innerText = timeStr;
+        const wApiEl = document.getElementById('srcWeatherApi');
+        if (wApiEl) wApiEl.innerText = 'Open-Meteo API';
+
+        // Prepare Safe ML Inference Payload using getValidNumber helper (No NaN / undefined values)
+        const payload = {
+            location_name: locName,
+            latitude: lat,
+            longitude: lon,
+            rainfall_current_mm: currRain !== null ? currRain : 0.0,
+            rainfall_24h_mm: rain24h !== null ? rain24h : 0.0,
+            rainfall_7d_mm: rain7d !== null ? rain7d : 0.0,
+            rainfall_forecast_24h_mm: rainFc !== null ? rainFc : 0.0,
+            temperature_c: tempC !== null ? tempC : 28.0,
+            humidity_pct: humidity !== null ? humidity : 80.0,
+            wind_speed_kmh: windKmh !== null ? windKmh : 15.0,
+            elevation_m: elev !== null ? elev : 25.0,
+        };
+
+        const distWaterVal = getValidNumber(document.getElementById('distWater'), 'Distance to River', false);
+        const riverLevelVal = getValidNumber(document.getElementById('riverLevel'), 'River Gauge Level', false);
+        const soilMoistVal = getValidNumber(document.getElementById('soilMoist'), 'Soil Saturation Index', false);
+
+        if (distWaterVal !== null) payload.distance_to_water_km = distWaterVal;
+        if (riverLevelVal !== null) payload.river_water_level_m = riverLevelVal;
+        if (soilMoistVal !== null) payload.soil_moisture_index = soilMoistVal;
+
+        // Run XGBoost & Random Forest ML Inference API
+        await executeRiskPredictionInference(payload);
+
+    } catch (e) {
+        console.warn("Live telemetry fetch error:", e);
+        if (badge) {
+            badge.className = 'badge bg-danger font-monospace';
+            badge.innerText = 'LIVE DATA UNAVAILABLE';
+        }
+        showToast(e.message || "Live weather data is temporarily unavailable. Weather fields have been left blank.", "warning");
+    } finally {
+        if (btn && reqId === currentRiskFetchReqId) {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="cpu" style="width: 18px; height: 18px;"></i> RUN XGBOOST & RANDOM FOREST INFERENCE';
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+
+// Execute Inference API (/api/risk/predict/) with Safe Error Message Handling
+async function executeRiskPredictionInference(payload) {
+    const csrfToken = (() => {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 10) === 'csrftoken=') {
+                    cookieValue = decodeURIComponent(cookie.substring(10));
+                    break;
+                }
+            }
+        }
+        if (cookieValue) return cookieValue;
+        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        return csrfInput ? csrfInput.value : '';
+    })();
+
+    try {
+        const res = await fetch('/api/risk/predict/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify(payload)
+        });
+
+        let data = {};
+        try {
+            data = await res.json();
+        } catch (parseErr) {
+            data = { detail: "The server returned an unparseable response." };
+        }
+
+        if (!res.ok) {
+            console.error("Risk Prediction API Error:", res.status, data);
+            const errMsg = data.message || data.detail || data.error || (typeof data === 'string' ? data : JSON.stringify(data));
+            throw new Error(`Risk prediction failed: ${errMsg}`);
+        }
+
+        if (data.success) {
+            const pred = data.prediction;
+            const expl = data.explanation;
+
+            document.getElementById('outLocationName').innerText = pred.location_name;
+            document.getElementById('outModelMode').innerText = `Model: ${pred.model_mode} (Real Multi-Disaster XGBoost / RF Estimator)`;
+            document.getElementById('outRiskBadge').className = `badge badge-risk-${pred.risk_level.toLowerCase()} fs-6`;
+            document.getElementById('outRiskBadge').innerText = `${pred.risk_level} ${pred.risk_score}%`;
+            document.getElementById('outScoreVal').innerText = `${pred.risk_score}%`;
+            document.getElementById('outConfidenceVal').innerText = `${Math.round(pred.confidence * 100)}%`;
+            document.getElementById('outDecisionVal').innerText = pred.risk_level === 'CRITICAL' ? 'EVACUATE' : (pred.risk_level === 'HIGH' ? 'WARNING' : 'MONITOR');
+
+            const actionEl = document.getElementById('outActionDirective');
+            if (actionEl) {
+                actionEl.className = pred.risk_level === 'CRITICAL' || pred.risk_level === 'HIGH' ? 'alert alert-danger border-danger border-opacity-50 small mb-4' : 'alert alert-info border-info border-opacity-50 small mb-4';
+                actionEl.innerHTML = `<strong>Recommended Operational Action:</strong> ${pred.recommended_action}`;
+            }
+
+            // Populate contributing factors
+            const tbody = document.getElementById('contributingFactorsList');
+            if (tbody && expl.contributing_factors) {
+                tbody.innerHTML = '';
+                expl.contributing_factors.forEach(f => {
+                    const tr = document.createElement('tr');
+                    const badgeClass = f.contribution === 'CRITICAL' ? 'bg-danger' : (f.contribution === 'HIGH' ? 'bg-danger' : (f.contribution === 'MODERATE' ? 'bg-warning text-dark' : 'bg-success'));
+                    tr.innerHTML = `
+                        <td>${f.factor}</td>
+                        <td><strong>${f.value}</strong></td>
+                        <td><span class="badge ${badgeClass}">${f.contribution}</span></td>
+                        <td>${f.description}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            showToast(`Calculated ${pred.risk_level} (${pred.risk_score}%) risk score for ${pred.location_name}!`, 'success');
+        } else {
+            showToast(data.message || 'Error executing ML prediction', 'error');
+        }
+    } catch (err) {
+        showToast(err.message || 'Error executing ML prediction', 'error');
+    }
+}
+
+// Form Submit Handler
+document.getElementById('riskPredictionForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+        const lat = getValidNumber(document.getElementById('lat'), 'Latitude', true);
+        const lon = getValidNumber(document.getElementById('lon'), 'Longitude', true);
+        const locName = document.getElementById('locName').value.trim();
+
+        if (!locName) {
+            showToast('Please enter or search for a location.', 'warning');
+            return;
+        }
+
+        if (lat < -90 || lat > 90) {
+            showToast('Latitude must be between -90 and 90 degrees.', 'warning');
+            return;
+        }
+
+        if (lon < -180 || lon > 180) {
+            showToast('Longitude must be between -180 and 180 degrees.', 'warning');
+            return;
+        }
+
+        fetchLiveEnvironmentalTelemetry(lat, lon, locName);
+    } catch(err) {
+        showToast(err.message, 'warning');
+    }
+});
+
+// Hide dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('riskLocSearchResults');
+    const input = document.getElementById('locName');
+    if (dropdown && input && !dropdown.contains(e.target) && !input.contains(e.target)) {
+        dropdown.style.display = 'none';
+    }
+});
+
+// Initial State: Form is blank. No pre-filled fake prediction on load.
+document.addEventListener('DOMContentLoaded', () => {
+    const resultCard = document.getElementById('riskResultCard');
+    if (resultCard) {
+        document.getElementById('outLocationName').innerText = 'Select a Location Above';
+        document.getElementById('outModelMode').innerText = 'Model: Multi-Disaster XGBoost / RF Estimator';
+        document.getElementById('outRiskBadge').className = 'badge bg-secondary fs-6';
+        document.getElementById('outRiskBadge').innerText = 'AWAITING SELECTION';
+        document.getElementById('outScoreVal').innerText = '--';
+        document.getElementById('outConfidenceVal').innerText = '--';
+        document.getElementById('outDecisionVal').innerText = 'WAITING';
+        document.getElementById('outActionDirective').className = 'alert alert-secondary border-secondary border-opacity-50 small mb-4';
+        document.getElementById('outActionDirective').innerHTML = 'Select or search a location above to load live environmental telemetry and execute risk inference.';
+    }
+});
+</script>
+{% endblock %}

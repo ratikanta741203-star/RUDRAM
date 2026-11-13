@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Page Not Found | RUDRAM 2.0{% endblock %}
+{% block meta_description %}The requested RUDRAM page could not be found. Return to the disaster intelligence dashboard.{% endblock %}
+{% block page_heading %}{% endblock %}
+
+{% block content %}
+<section class="rudram-card text-center py-5 my-4" aria-labelledby="notFoundTitle">
+    <p class="display-1 fw-bold text-primary mb-0">404</p>
+    <h1 id="notFoundTitle" class="h3 fw-bold mt-2">We couldn't find that page</h1>
+    <p class="text-secondary mx-auto mb-4" style="max-width: 34rem;">
+        The address may be outdated or the page may have moved. Use the dashboard to continue.
+    </p>
+    <a href="{% url 'dashboard' %}" class="btn btn-primary px-4">Return to dashboard</a>
+</section>
+{% endblock %}

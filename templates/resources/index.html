@@ -1,0 +1,415 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM - Emergency Resources & Rescue Taskforces{% endblock %}
+{% block meta_description %}Review available emergency supplies, resource requests, and rescue team readiness in the RUDRAM response platform.{% endblock %}
+{% block page_heading %}Resource Stockpile Logistics & Rescue Operations{% endblock %}
+
+{% block content %}
+<!-- Metrics Summary -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">Available Supplies</div>
+                <div class="stat-value text-success">{{ total_avail|default:"28,500" }}</div>
+                <div class="badge-source mt-1">Central Warehouse</div>
+            </div>
+            <i data-lucide="package-check" class="text-success opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">Dispatched / In-Transit</div>
+                <div class="stat-value text-info">{{ total_alloc|default:"8,200" }}</div>
+                <div class="badge-source mt-1">Field Convoys</div>
+            </div>
+            <i data-lucide="truck" class="text-info opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">Target Requisition</div>
+                <div class="stat-value text-warning">{{ total_req|default:"42,000" }}</div>
+                <div class="badge-source mt-1">Emergency Estimate</div>
+            </div>
+            <i data-lucide="clipboard-list" class="text-warning opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">Rescue Battalions</div>
+                <div class="stat-value text-primary">4 Staged</div>
+                <div class="badge-source mt-1">ODRAF / NDRF / Fire</div>
+            </div>
+            <i data-lucide="shield" class="text-primary opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Resource Inventory Table -->
+    <div class="col-lg-7">
+        <div class="rudram-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h6 class="fw-bold mb-0">Disaster Relief Stockpile Inventory</h6>
+                {% if user_role == 'ADMIN' %}
+                    {% if pending_count > 0 %}
+                    <a href="{% url 'admin_dashboard' %}" class="badge bg-warning text-dark text-decoration-none fw-bold me-2">
+                        <i data-lucide="bell" style="width: 12px; height: 12px;" class="me-1"></i>Pending Requests: {{ pending_count }}
+                    </a>
+                    {% endif %}
+                    <button class="btn btn-sm btn-primary fw-bold" onclick="openAllocateModal()">+ Dispatch Resources</button>
+                {% elif user_role == 'EMERGENCY_OPERATOR' %}
+                    <button class="btn btn-sm btn-outline-info fw-bold" onclick="openAllocateModal()">Request Resource Dispatch</button>
+                {% endif %}
+            </div>
+            <div class="table-responsive">
+                <table class="table table-river-status table-hover small mb-0">
+                    <thead>
+                        <tr class="text-info fw-bold">
+                            <th>Stock Item</th>
+                            <th>Category</th>
+                            <th>Available</th>
+                            <th>Dispatched</th>
+                            <th>Warehouse Depot</th>
+                            {% if user_role != 'CITIZEN' %}
+                            <th>Action</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in resources %}
+                        <tr>
+                            <td><strong class="river-name">{{ r.name }}</strong></td>
+                            <td><span class="badge bg-secondary bg-opacity-25 text-info border border-info border-opacity-50">{{ r.get_category_display }}</span></td>
+                            <td class="text-success fw-bold">{{ r.quantity_available }} {{ r.unit }}</td>
+                            <td class="text-info fw-semibold">{{ r.quantity_allocated }}</td>
+                            <td class="small fw-semibold">{{ r.warehouse_location|truncatewords:4 }}</td>
+                            {% if user_role != 'CITIZEN' %}
+                            <td>
+                                {% if user_role == 'ADMIN' %}
+                                <button class="btn btn-sm btn-outline-info py-0 px-2 fw-bold" onclick="quickAllocateItem({{ r.id }}, '{{ r.name }}', {{ r.quantity_available }})">
+                                    Dispatch
+                                </button>
+                                {% elif user_role == 'EMERGENCY_OPERATOR' %}
+                                <button class="btn btn-sm btn-outline-warning py-0 px-2 fw-bold" onclick="quickAllocateItem({{ r.id }}, '{{ r.name }}', {{ r.quantity_available }})">
+                                    Request Dispatch
+                                </button>
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-secondary text-center py-3">No inventory records logged.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Rescue Battalions Staging -->
+    <div class="col-lg-5">
+        <div class="rudram-card h-100">
+            <h6 class="fw-bold mb-3">Staged Rescue Battalions & Taskforces</h6>
+            <div class="d-flex flex-column gap-3">
+                {% for team in rescue_teams %}
+                <div class="p-3 rescue-team-card rounded small">
+                    <div class="d-flex align-items-start justify-content-between mb-1">
+                        <div>
+                            <strong class="fs-6 team-name">{{ team.name }}</strong>
+                            <div class="small text-info fw-semibold">{{ team.get_team_type_display }}</div>
+                        </div>
+                        <span class="badge bg-{% if team.status == 'DEPLOYED' %}danger text-white{% else %}success text-white{% endif %} fw-bold">
+                            {{ team.status }}
+                        </span>
+                    </div>
+                    <div class="row g-1 small my-1">
+                        <div class="col-6"><strong class="text-secondary">Members:</strong> <span class="fw-semibold">{{ team.members_count }} personnel</span></div>
+                        <div class="col-6"><strong class="text-secondary">Command:</strong> <span class="fw-semibold">{{ team.lead_officer }}</span></div>
+                        <div class="col-12"><strong class="text-secondary">Equipment:</strong> <span class="text-info fw-semibold">{{ team.equipment_summary }}</span></div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-secondary border-opacity-25">
+                        <span class="small fw-semibold"><i data-lucide="phone" class="me-1 text-warning" style="width: 12px; height: 12px;"></i>{{ team.contact_phone }}</span>
+                        {% if user_role == 'ADMIN' %}
+                        <button class="btn btn-sm btn-outline-warning py-0 px-2 fw-bold" data-bs-toggle="modal" data-bs-target="#teamStatusModal{{ team.id }}">Update Status</button>
+                        {% elif user_role == 'EMERGENCY_OPERATOR' %}
+                        <button class="btn btn-sm btn-outline-warning py-0 px-2 fw-bold" data-bs-toggle="modal" data-bs-target="#teamStatusModal{{ team.id }}">Request Status Update</button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-muted small">No rescue teams configured.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user_role == 'EMERGENCY_OPERATOR' and operator_requests %}
+<!-- Operator Request History Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="rudram-card">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h6 class="fw-bold mb-0 text-white">
+                    <i data-lucide="clock" style="width: 18px; height: 18px;" class="me-2 text-warning"></i>
+                    My Operational Approval Requests
+                </h6>
+                <span class="badge bg-secondary text-white font-monospace">Operator Submission Log</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover small mb-0">
+                    <thead>
+                        <tr class="text-info fw-bold">
+                            <th>Request ID</th>
+                            <th>Date & Time</th>
+                            <th>Request Type</th>
+                            <th>Target Object</th>
+                            <th>Requested Change</th>
+                            <th>Reason / Notes</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in operator_requests %}
+                        <tr>
+                            <td><strong class="text-white">#{{ req.id }}</strong></td>
+                            <td class="text-muted font-monospace">{{ req.created_at|date:"Y-m-d H:i" }}</td>
+                            <td><span class="badge bg-secondary text-white">{{ req.get_request_type_display }}</span></td>
+                            <td class="text-white fw-semibold">{{ req.target_object_name|default:req.target_model }}</td>
+                            <td><code class="text-info">{{ req.requested_changes }}</code></td>
+                            <td class="text-secondary small">{{ req.reason }}</td>
+                            <td>
+                                {% if req.status == 'PENDING' %}
+                                    <span class="badge bg-warning text-dark fw-bold">PENDING APPROVAL</span>
+                                {% elif req.status == 'APPROVED' %}
+                                    <span class="badge bg-success text-white">APPROVED</span>
+                                {% else %}
+                                    <span class="badge bg-danger text-white" title="{{ req.rejection_reason }}">REJECTED</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ==================== MODALS SECTION (ROOT TEMPLATE LEVEL) ==================== -->
+{% if user_role != 'CITIZEN' %}
+<!-- Rescue Team Status Update Modals -->
+{% for team in rescue_teams %}
+<div class="modal fade text-start" id="teamStatusModal{{ team.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <form action="{% url 'team_status_update' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="team_id" value="{{ team.id }}">
+                <div class="modal-header border-secondary">
+                    <h6 class="modal-title fw-bold text-white">Update Status: {{ team.name }}</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary fw-semibold">Target Operational Status</label>
+                        <select name="status" class="form-select bg-dark border-secondary text-light">
+                            <option value="AVAILABLE" {% if team.status == 'AVAILABLE' %}selected{% endif %}>AVAILABLE & Staged</option>
+                            <option value="DEPLOYED" {% if team.status == 'DEPLOYED' %}selected{% endif %}>DEPLOYED in Active Zone</option>
+                            <option value="BUSY" {% if team.status == 'BUSY' %}selected{% endif %}>BUSY in Rescue Operations</option>
+                            <option value="OFFLINE" {% if team.status == 'OFFLINE' %}selected{% endif %}>OFFLINE / Resting</option>
+                        </select>
+                    </div>
+                    {% if user_role == 'EMERGENCY_OPERATOR' %}
+                    <div class="alert alert-info py-2 small mb-0">
+                        <i data-lucide="info" style="width: 14px; height: 14px;" class="me-1"></i>
+                        Operator Note: Status change will be submitted for Admin Approval.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning btn-sm fw-bold">Submit Status Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Dispatch Allocation Modal -->
+<div class="modal fade" id="allocateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white fw-bold">
+                    {% if user_role == 'ADMIN' %}
+                    Emergency Resource Dispatch Requisition
+                    {% else %}
+                    Request Resource Dispatch (Requires Admin Approval)
+                    {% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="allocateForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary">Target Resource</label>
+                        <select id="allocResourceSelect" class="form-select bg-dark border-secondary text-light">
+                            {% for r in resources %}
+                            <option value="{{ r.id }}" data-avail="{{ r.quantity_available }}">{{ r.name }} ({{ r.quantity_available }} {{ r.unit }} available)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary">Quantity to Dispatch</label>
+                        <input type="number" id="allocQty" class="form-control bg-dark border-secondary text-light" value="500" min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary">Destination Sector / Shelter</label>
+                        <input type="text" id="allocDest" class="form-control bg-dark border-secondary text-light" value="Zone A - Rasulgarh Relief Point">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary">Dispatch Notes</label>
+                        <textarea id="allocNotes" class="form-control bg-dark border-secondary text-light" rows="2">Priority emergency supply shipment</textarea>
+                    </div>
+                    {% if user_role == 'EMERGENCY_OPERATOR' %}
+                    <div class="alert alert-info py-2 small mb-0">
+                        <i data-lucide="info" style="width: 14px; height: 14px;" class="me-1"></i>
+                        Notice: As an Emergency Operator, this request will be sent to the Admin Command Center for review. Stock will remain unchanged until approved.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold">
+                        {% if user_role == 'ADMIN' %}Confirm & Authorize Dispatch{% else %}Submit Dispatch Request{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allocModal = null;
+
+// Utility to retrieve CSRF token for API fetch requests
+function getCsrfToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, 10) === 'csrftoken=') {
+                cookieValue = decodeURIComponent(cookie.substring(10));
+                break;
+            }
+        }
+    }
+    if (cookieValue) return cookieValue;
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    return csrfInput ? csrfInput.value : '';
+}
+
+// Global modal cleanup & focus release
+function cleanupStaleModalBackdrops() {
+    const openModals = document.querySelectorAll('.modal.show');
+    if (openModals.length === 0) {
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+    }
+}
+
+document.addEventListener('hide.bs.modal', function (e) {
+    if (e.target && e.target.contains(document.activeElement)) {
+        document.activeElement.blur();
+    }
+});
+
+document.addEventListener('hidden.bs.modal', function (e) {
+    if (e.target && e.target.contains(document.activeElement)) {
+        document.activeElement.blur();
+    }
+    cleanupStaleModalBackdrops();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    cleanupStaleModalBackdrops();
+    const allocEl = document.getElementById('allocateModal');
+    if (allocEl) allocModal = new bootstrap.Modal(allocEl);
+});
+
+function openAllocateModal() {
+    if (allocModal) allocModal.show();
+}
+
+function quickAllocateItem(id, name, avail) {
+    const sel = document.getElementById('allocResourceSelect');
+    if (sel) sel.value = id;
+    const qtyInput = document.getElementById('allocQty');
+    if (qtyInput) qtyInput.value = Math.min(500, avail);
+    openAllocateModal();
+}
+
+const allocForm = document.getElementById('allocateForm');
+if (allocForm) {
+    allocForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const resId = document.getElementById('allocResourceSelect').value;
+        const qty = parseInt(document.getElementById('allocQty').value);
+        const dest = document.getElementById('allocDest').value;
+        const notes = document.getElementById('allocNotes').value;
+
+        if (document.activeElement) document.activeElement.blur();
+
+        try {
+            const res = await fetch('/api/resources/allocate/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    resource_id: resId,
+                    quantity: qty,
+                    destination_zone: dest,
+                    notes: notes
+                })
+            });
+            const data = await res.json();
+            if (res.status === 403) {
+                showToast(data.error || 'Access Denied: You do not have permission to perform this operational action.', 'error');
+                if (allocModal) allocModal.hide();
+                return;
+            }
+            if (data.pending) {
+                showToast('Dispatch request submitted for Admin approval. Stock will remain unchanged until approved.', 'info');
+                if (allocModal) allocModal.hide();
+                setTimeout(() => window.location.reload(), 1000);
+            } else if (data.success) {
+                showToast(`Authorized dispatch of ${qty} units to ${dest}!`, 'success');
+                if (allocModal) allocModal.hide();
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                showToast(data.error || 'Allocation error', 'error');
+            }
+        } catch (err) {
+            showToast('Network error during resource allocation', 'error');
+        }
+    });
+}
+</script>
+{% endblock %}

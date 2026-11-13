@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM - Situation Reports & Geospatial Exports{% endblock %}
+{% block meta_description %}Generate and export disaster situation reports and geospatial data for RUDRAM emergency planning and response.{% endblock %}
+{% block page_heading %}Disaster Situation Reports & Geospatial Data Exports{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Instant Export Actions -->
+    <div class="col-lg-6">
+        <div class="rudram-card h-100">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <div class="p-2 bg-danger bg-opacity-25 text-danger rounded">
+                    <i data-lucide="file-text" style="width: 22px; height: 22px;"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0 text-white">Generate Official Incident SITREP (PDF)</h5>
+                    <div class="small text-secondary">Formatted Situation Report with AI Directives, Shelter Status & Hydrology</div>
+                </div>
+            </div>
+
+            <p class="small text-light mb-4">
+                Compiles live and baseline telemetry into a publication-ready PDF document including active disaster metrics, shelter occupancy figures, resource deficit statistics, and strategic AI response directives.
+            </p>
+
+            <a href="{% url 'api_reports_export_pdf' %}" class="btn btn-danger w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-2">
+                <i data-lucide="download" style="width: 18px; height: 18px;"></i>
+                GENERATE & DOWNLOAD OFFICIAL SITUATION REPORT (PDF)
+            </a>
+        </div>
+    </div>
+
+    <!-- Structured Data Exports (CSV) -->
+    <div class="col-lg-6">
+        <div class="rudram-card h-100">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <div class="p-2 bg-info bg-opacity-25 text-info rounded">
+                    <i data-lucide="table" style="width: 22px; height: 22px;"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0 text-white">Export Tabular Disaster Datasets (CSV)</h5>
+                    <div class="small text-secondary">Interoperable data tables for GIS analysts & emergency operations</div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <a href="{% url 'api_reports_export_csv' %}?type=shelters" class="btn btn-outline-info text-start d-flex align-items-center justify-content-between">
+                    <span><i data-lucide="home" class="me-2" style="width: 16px; height: 16px;"></i>Shelters & Bed Occupancy (.CSV)</span>
+                    <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                </a>
+                <a href="{% url 'api_reports_export_csv' %}?type=resources" class="btn btn-outline-info text-start d-flex align-items-center justify-content-between">
+                    <span><i data-lucide="box" class="me-2" style="width: 16px; height: 16px;"></i>Emergency Stockpile Inventory (.CSV)</span>
+                    <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                </a>
+                <a href="{% url 'api_reports_export_csv' %}?type=risks" class="btn btn-outline-info text-start d-flex align-items-center justify-content-between">
+                    <span><i data-lucide="cpu" class="me-2" style="width: 16px; height: 16px;"></i>AI Flood Risk Inferences (.CSV)</span>
+                    <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                </a>
+                <a href="{% url 'api_reports_export_csv' %}?type=disasters" class="btn btn-outline-info text-start d-flex align-items-center justify-content-between">
+                    <span><i data-lucide="flame" class="me-2" style="width: 16px; height: 16px;"></i>Active Multi-Hazard Events (.CSV)</span>
+                    <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

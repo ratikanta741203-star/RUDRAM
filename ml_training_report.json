@@ -1,0 +1,176 @@
+{
+  "flood_model": {
+    "model_type": "Flood Risk Prediction",
+    "dataset_name": "combined_flood_training_dataset.csv",
+    "dataset_records": 225150,
+    "train_samples": 168629,
+    "val_samples": 33718,
+    "test_samples": 22803,
+    "positive_test_samples": 714,
+    "negative_test_samples": 22089,
+    "candidate_metrics": {
+      "logistic_regression_baseline": {
+        "accuracy": 0.9961,
+        "precision": 0.9276,
+        "recall": 0.951,
+        "f1_score": 0.9391,
+        "roc_auc": 0.999,
+        "brier_score": 0.0035,
+        "confusion_matrix": [
+          [
+            22036,
+            53
+          ],
+          [
+            35,
+            679
+          ]
+        ]
+      },
+      "random_forest_v2": {
+        "accuracy": 0.9958,
+        "precision": 0.8862,
+        "recall": 0.993,
+        "f1_score": 0.9366,
+        "roc_auc": 0.999,
+        "brier_score": 0.0035,
+        "confusion_matrix": [
+          [
+            21998,
+            91
+          ],
+          [
+            5,
+            709
+          ]
+        ]
+      },
+      "xgboost_v2": {
+        "accuracy": 0.9968,
+        "precision": 0.9083,
+        "recall": 0.9986,
+        "f1_score": 0.9513,
+        "roc_auc": 0.9993,
+        "brier_score": 0.003,
+        "confusion_matrix": [
+          [
+            22017,
+            72
+          ],
+          [
+            1,
+            713
+          ]
+        ]
+      },
+      "weighted_ensemble": {
+        "accuracy": 0.9964,
+        "precision": 0.899,
+        "recall": 0.9972,
+        "f1_score": 0.9456,
+        "roc_auc": 0.9991,
+        "brier_score": 0.003,
+        "confusion_matrix": [
+          [
+            22009,
+            80
+          ],
+          [
+            2,
+            712
+          ]
+        ]
+      }
+    },
+    "feature_importances": {
+      "rainfall_current_mm": 0.0005,
+      "rainfall_24h_mm": 0.0378,
+      "rainfall_7d_mm": 0.0013,
+      "rainfall_forecast_24h_mm": 0.0013,
+      "temperature_c": 0.0003,
+      "humidity_pct": 0.0004,
+      "wind_speed_kmh": 0.0003,
+      "elevation_m": 0.0011,
+      "slope_deg": 0.0002,
+      "distance_to_water_km": 0.0007,
+      "historical_flood_freq": 0.0005,
+      "population_density_sqkm": 0.0004,
+      "soil_moisture_index": 0.0959,
+      "river_water_level_m": 0.8593
+    },
+    "promoted_to_active": true
+  },
+  "cyclone_model": {
+    "model_type": "Cyclone Risk Prediction",
+    "dataset_name": "cyclone_training_dataset_v2.csv",
+    "dataset_records": 5000,
+    "train_samples": 2517,
+    "val_samples": 1338,
+    "test_samples": 1145,
+    "candidate_metrics": {
+      "linear_regression_baseline": {
+        "mae": 4.0111,
+        "rmse": 5.161,
+        "r2": 0.9
+      },
+      "random_forest_v2": {
+        "mae": 1.1048,
+        "rmse": 1.3842,
+        "r2": 0.9928
+      },
+      "xgboost_v2": {
+        "mae": 1.091,
+        "rmse": 1.3625,
+        "r2": 0.993
+      }
+    },
+    "feature_importances": {
+      "current_wind_speed_kmh": 0.7803,
+      "wind_gust_kmh": 0.0522,
+      "max_forecast_wind_kmh": 0.0037,
+      "max_forecast_gust_kmh": 0.0017,
+      "atmospheric_pressure_hpa": 0.1575,
+      "min_forecast_pressure_hpa": 0.0026,
+      "current_temperature_c": 0.0002,
+      "relative_humidity_pct": 0.0002,
+      "recent_rainfall_mm": 0.0003,
+      "forecast_rainfall_7d_mm": 0.0003,
+      "coastal_proximity_km": 0.0004,
+      "latitude": 0.0002,
+      "longitude": 0.0003
+    },
+    "promoted_to_active": true
+  },
+  "registry": {
+    "registry_version": "2.0.0",
+    "last_updated": "2026-09-01 19:03:26",
+    "active_models": [
+      {
+        "model_name": "RUDRAM Flood Risk Multi-Disaster Estimator",
+        "version": "v2.0.0-odisha-india",
+        "file_path": "ml/models/flood_risk_xgboost.joblib",
+        "algorithm": "XGBoost Classifier + RF Ensemble",
+        "status": "ACTIVE",
+        "test_f1_score": 0.9513,
+        "test_roc_auc": 0.9993
+      },
+      {
+        "model_name": "RUDRAM Dedicated Tropical Cyclone Risk Predictor",
+        "version": "v2.0.0-north-indian-ocean",
+        "file_path": "ml/models/cyclone_risk_xgboost.joblib",
+        "algorithm": "XGBoost Regressor",
+        "status": "ACTIVE",
+        "test_mae": 1.091,
+        "test_r2": 0.993
+      }
+    ],
+    "archived_models": [
+      {
+        "model_name": "Flood Risk Baseline",
+        "version": "v1.0.0-odisha-statewide",
+        "file_path": "ml/models/flood_risk_random_forest.joblib",
+        "status": "VALIDATED"
+      }
+    ]
+  }
+}

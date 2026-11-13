@@ -1,0 +1,627 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM - Interactive GIS Multi-Hazard Risk Map{% endblock %}
+{% block meta_description %}Explore GIS maps of disaster hazards, shelters, evacuation routes, and risk areas with RUDRAM geographic intelligence.{% endblock %}
+{% block page_heading %}GIS Multi-Hazard Situational Map Studio{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="row g-3">
+    <!-- Map Control Sidebar -->
+    <div class="col-lg-3">
+        <div class="rudram-card mb-3">
+            <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <i data-lucide="layers" class="text-info" style="width: 18px; height: 18px;"></i>
+                Map Layers & Controls
+            </h6>
+
+            <!-- Search Area with Live Google Places Autocomplete -->
+            <div class="mb-3 position-relative">
+                <label class="form-label small text-secondary d-flex justify-content-between align-items-center">
+                    <span>Search Location / Landmark</span>
+                    <button type="button" class="btn btn-sm btn-link text-info p-0 text-decoration-none" onclick="acquireGpsForGisMap()" title="Use Current GPS">
+                        <i data-lucide="crosshair" style="width: 13px; height: 13px;" class="me-1"></i>GPS
+                    </button>
+                </label>
+                <div class="input-group input-group-sm">
+                    <input type="text" id="mapSearchInput" oninput="onGisMapSearchInput()" onfocus="onGisMapSearchInput()" class="form-control bg-dark border-secondary text-light" placeholder="Search village, city, PIN code..." autocomplete="off">
+                    <button class="btn btn-outline-info" id="btnMapSearch" onclick="triggerGisSearchSubmit()"><i data-lucide="search" style="width: 14px; height: 14px;"></i></button>
+                </div>
+
+                <!-- Autocomplete Dropdown List Container -->
+                <div id="gisSearchDropdown" class="dropdown-menu dropdown-menu-dark w-100 shadow-lg mt-1 p-0 overflow-auto" style="display: none; max-height: 240px; z-index: 9999; border: 1px solid rgba(56, 189, 248, 0.4); position: absolute; top: 100%; left: 0;">
+                    <div id="gisSearchDropdownContent"></div>
+                </div>
+            </div>
+
+            <!-- Inundation Layer Opacity -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between small text-secondary mb-1">
+                    <span>Flood Overlay Opacity</span>
+                    <span id="opacityVal">75%</span>
+                </div>
+                <input type="range" class="form-range" id="layerOpacitySlider" min="0.1" max="1.0" step="0.05" value="0.75">
+            </div>
+
+            <!-- Quick Filter Presets -->
+            <div class="mb-3">
+                <label class="form-label small text-secondary">Quick Tactical Views</label>
+                <div class="d-grid gap-1">
+                    <button class="btn btn-sm btn-outline-success text-start py-1" onclick="focusShelters()">
+                        🏠 Evacuation Shelters & Camps
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning text-start py-1" onclick="focusEvacuationRoutes()">
+                        🏃 Recommended Safe Routes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Location Risk Intelligence Card -->
+        <div class="rudram-card mb-3" id="gisRiskIntelCard" style="display: none;">
+            <h6 class="fw-bold mb-2 small text-uppercase text-info d-flex align-items-center justify-content-between">
+                <span><i data-lucide="shield-alert" class="me-1" style="width: 14px; height: 14px;"></i>Live Risk Intelligence</span>
+                <span id="gisRiskBadge" class="badge bg-secondary">ANALYZING</span>
+            </h6>
+            <div id="gisSelectedLocationName" class="fw-bold text-white small mb-1">--</div>
+            <div id="gisSelectedCoords" class="small text-muted font-monospace mb-2">Lat: --, Lon: --</div>
+
+            <div class="p-2 bg-dark rounded border border-secondary border-opacity-25 mb-2">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small text-secondary">Calculated ML Risk Score:</span>
+                    <span class="fw-bold fs-6 text-warning" id="gisRiskScoreVal">-- / 100</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div id="gisRiskProgressBar" class="progress-bar bg-warning" role="progressbar" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- Live Meteorological Telemetry Panel -->
+            <div class="p-2 bg-dark rounded border border-secondary border-opacity-25 mb-2 small">
+                <div class="fw-bold text-info border-bottom border-secondary border-opacity-25 pb-1 mb-2" style="font-size: 0.75rem;">
+                    ☔ Live Meteorological Telemetry
+                </div>
+                <div class="row g-1 text-secondary" style="font-size: 0.72rem;">
+                    <div class="col-6">Today's Rain: <strong class="text-white" id="gisRainToday">--</strong></div>
+                    <div class="col-6">Temp: <strong class="text-white" id="gisTempVal">--</strong></div>
+                    <div class="col-6">Humidity: <strong class="text-white" id="gisHumVal">--</strong></div>
+                    <div class="col-6">Wind: <strong class="text-white" id="gisWindVal">--</strong></div>
+                    <div class="col-12 mt-1">River Level: <strong class="text-warning" id="gisRiverVal">Station data unavailable</strong></div>
+                </div>
+            </div>
+
+            <!-- 7-Day Rainfall Forecast Breakdown -->
+            <div class="p-2 bg-dark rounded border border-secondary border-opacity-25 mb-2 small">
+                <div class="fw-bold text-info border-bottom border-secondary border-opacity-25 pb-1 mb-1" style="font-size: 0.75rem;">
+                    📅 7-Day Rainfall Forecast
+                </div>
+                <div id="gisForecast7dContainer" style="max-height: 120px; overflow-y: auto;">
+                    <div class="text-muted small">Loading forecast...</div>
+                </div>
+            </div>
+
+            <div class="small text-secondary fw-bold mb-1 mt-3">Nearby Real Admin Shelters:</div>
+            <div id="gisNearbySheltersList" class="list-group list-group-flush small overflow-auto" style="max-height: 160px;"></div>
+        </div>
+
+        <!-- Legend Card -->
+        <div class="rudram-card">
+            <h6 class="fw-bold mb-2 small text-uppercase text-secondary">Map Legend</h6>
+            <div class="d-flex flex-column gap-2 small">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width: 14px; height: 14px; background: #ef4444; border-radius: 3px; display: inline-block;"></span>
+                    <span>Critical Risk Zone (>70 Risk Score)</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width: 14px; height: 14px; background: #f97316; border-radius: 3px; display: inline-block;"></span>
+                    <span>Moderate Risk Zone (40 - 70 Score)</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width: 14px; height: 14px; background: #10b981; border-radius: 50%; display: inline-block;"></span>
+                    <span>Designated High-Ground Shelter</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width: 24px; height: 4px; background: #10b981; display: inline-block;"></span>
+                    <span>Google Live Evacuation Road Route</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Full Studio Map -->
+    <div class="col-lg-9">
+        <div class="rudram-card p-0 overflow-hidden" style="height: 700px;">
+            <div id="fullGisMap" style="width: 100%; height: 100%;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/map.js"></script>
+<script>
+let studioMap = null;
+let gisSearchDebounceTimer = null;
+let gisSearchAbortController = null;
+let gisSelectedMarker = null;
+let gisRiskCircle = null;
+let gisEvacRouteLayer = null;
+let gisShelterMarkers = [];
+let activeGisSelection = null;
+
+const adminShelters = {{ shelters_json|safe }};
+
+document.addEventListener('DOMContentLoaded', () => {
+    studioMap = initRudramGISMap('fullGisMap', 20.2961, 85.8245, 13);
+
+    // Close search dropdown on outside click
+    document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('gisSearchDropdown');
+        const input = document.getElementById('mapSearchInput');
+        if (dropdown && input && !input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+});
+
+function getCsrfToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, 10) === 'csrftoken=') {
+                cookieValue = decodeURIComponent(cookie.substring(10));
+                break;
+            }
+        }
+    }
+    if (cookieValue) return cookieValue;
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    return csrfInput ? csrfInput.value : '';
+}
+
+function calculateHaversine(lat1, lon1, lat2, lon2) {
+    const R = 6371.0;
+    const dLat = (lat2 - lat1) * Math.PI / 180.0;
+    const dLon = (lon2 - lon1) * Math.PI / 180.0;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180.0) * Math.cos(lat2 * Math.PI / 180.0) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+function decodeGooglePolylineJS(encoded) {
+    if (!encoded) return [];
+    let points = [];
+    let index = 0, len = encoded.length;
+    let lat = 0, lng = 0;
+    while (index < len) {
+        let b, shift = 0, result = 0;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+        } while (b >= 0x20);
+        let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        lat += dlat;
+
+        shift = 0;
+        result = 0;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+        } while (b >= 0x20);
+        let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        lng += dlng;
+
+        points.push([lat / 1e5, lng / 1e5]);
+    }
+    return points;
+}
+
+// Live Google Places Autocomplete Search Handler
+function onGisMapSearchInput() {
+    const input = document.getElementById('mapSearchInput');
+    const dropdown = document.getElementById('gisSearchDropdown');
+    const content = document.getElementById('gisSearchDropdownContent');
+
+    if (!input || !dropdown || !content) return;
+    const query = input.value.trim();
+
+    if (query.length < 2) {
+        dropdown.style.display = 'none';
+        content.innerHTML = '';
+        return;
+    }
+
+    if (gisSearchDebounceTimer) clearTimeout(gisSearchDebounceTimer);
+
+    dropdown.style.display = 'block';
+    content.innerHTML = '<div class="p-2 text-center text-muted small"><span class="spinner-border spinner-border-sm me-2 text-info"></span>Searching Google Places...</div>';
+
+    gisSearchDebounceTimer = setTimeout(() => {
+        fetchGisLocationSuggestions(query);
+    }, 400);
+}
+
+async function fetchGisLocationSuggestions(query) {
+    const content = document.getElementById('gisSearchDropdownContent');
+    const dropdown = document.getElementById('gisSearchDropdown');
+
+    if (gisSearchAbortController) gisSearchAbortController.abort();
+    gisSearchAbortController = new AbortController();
+
+    try {
+        const res = await fetch(`/api/location/search/?q=${encodeURIComponent(query)}`, {
+            signal: gisSearchAbortController.signal
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success && Array.isArray(data.results) && data.results.length > 0) {
+            let html = '<div class="list-group list-group-flush small">';
+            window.latestGisSearchResults = data.results;
+
+            data.results.forEach((item, idx) => {
+                const title = item.place_name || item.name || item.display_name;
+                const sub = item.display_name || item.full_address || '';
+                html += `
+                    <button type="button" class="list-group-item list-group-item-action bg-dark text-light border-secondary py-2 px-3 text-start" onclick="selectGisSearchResult(${idx})">
+                        <strong class="text-white">${escapeHtml(title)}</strong>
+                        <div class="small text-secondary text-truncate">${escapeHtml(sub)}</div>
+                    </button>
+                `;
+            });
+            html += '</div>';
+            content.innerHTML = html;
+            dropdown.style.display = 'block';
+        } else {
+            content.innerHTML = '<div class="p-2 text-center text-warning small">No live location results found.</div>';
+            dropdown.style.display = 'block';
+        }
+    } catch (err) {
+        if (err.name === 'AbortError') return;
+        content.innerHTML = '<div class="p-2 text-center text-danger small">Live search temporarily unavailable.</div>';
+        dropdown.style.display = 'block';
+    }
+}
+
+function triggerGisSearchSubmit() {
+    const input = document.getElementById('mapSearchInput');
+    if (!input || !input.value.trim()) return;
+    fetchGisLocationSuggestions(input.value.trim());
+}
+
+async function selectGisSearchResult(index) {
+    const dropdown = document.getElementById('gisSearchDropdown');
+    if (dropdown) dropdown.style.display = 'none';
+
+    const results = window.latestGisSearchResults || [];
+    if (index < 0 || index >= results.length) return;
+
+    const place = results[index];
+    const lat = place.latitude;
+    const lon = place.longitude;
+    const name = place.place_name || place.name || place.display_name;
+
+    document.getElementById('mapSearchInput').value = name;
+    await processSelectedGisLocation(lat, lon, name);
+}
+
+async function processSelectedGisLocation(lat, lon, name) {
+    if (!studioMap) return;
+
+    activeGisSelection = { lat: lat, lon: lon, name: name };
+
+    // Center & zoom Leaflet GIS map
+    studioMap.flyTo([lat, lon], 14, { duration: 1.2 });
+
+    // Update / Create Selected Location Marker
+    if (gisSelectedMarker) studioMap.removeLayer(gisSelectedMarker);
+    
+    const pinIcon = L.divIcon({
+        className: 'custom-gis-pin',
+        html: `<div style="background:#06b6d4; border:3px solid #ffffff; width:22px; height:22px; border-radius:50%; box-shadow:0 0 14px rgba(6,182,212,0.9); animation: pulseCritical 1.8s infinite;"></div>`,
+        iconSize: [22, 22],
+        iconAnchor: [11, 11]
+    });
+
+    gisSelectedMarker = L.marker([lat, lon], { icon: pinIcon })
+        .addTo(studioMap)
+        .bindPopup(`<div class="p-2 text-center"><span class="badge bg-info mb-1">SELECTED LOCATION</span><h6 class="fw-bold mb-0 text-white">${escapeHtml(name)}</h6><div class="small text-muted mt-1">Lat: ${lat.toFixed(4)}°, Lon: ${lon.toFixed(4)}°</div></div>`)
+        .openPopup();
+
+    // Show Risk Intelligence Card
+    const intelCard = document.getElementById('gisRiskIntelCard');
+    if (intelCard) intelCard.style.display = 'block';
+
+    document.getElementById('gisSelectedLocationName').innerText = name;
+    document.getElementById('gisSelectedCoords').innerText = `Lat: ${lat.toFixed(4)}°, Lon: ${lon.toFixed(4)}°`;
+
+    // 1. Run Live Risk Analysis
+    await runLiveGisRiskAnalysis(lat, lon, name);
+
+    // 2. Find Real Admin-Added Nearby Shelters
+    updateGisNearbyShelters(lat, lon);
+}
+
+async function runLiveGisRiskAnalysis(lat, lon, locationName) {
+    const badge = document.getElementById('gisRiskBadge');
+    const scoreVal = document.getElementById('gisRiskScoreVal');
+    const progressBar = document.getElementById('gisRiskProgressBar');
+
+    if (badge) { badge.className = 'badge bg-info'; badge.innerText = 'CALCULATING'; }
+    if (scoreVal) scoreVal.innerText = '-- / 100';
+
+    if (gisRiskCircle) {
+        studioMap.removeLayer(gisRiskCircle);
+        gisRiskCircle = null;
+    }
+
+    try {
+        const csrfToken = getCsrfToken();
+        const res = await fetch('/api/risk/predict/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                latitude: lat,
+                longitude: lon,
+                catchment_location: locationName
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            const score = Math.round(data.risk_percentage !== undefined ? data.risk_percentage : (data.risk_score || 0));
+            const rType = data.risk_type || (score > 30 ? 'FLOOD' : 'LOW');
+            const level = data.risk_level || (score >= 70 ? 'HIGH' : (score >= 40 ? 'MEDIUM' : 'LOW'));
+            const w = data.weather_telemetry || {};
+            const f7 = data.forecast_7d || [];
+
+            let color = '#10b981';
+            let badgeClass = 'badge bg-success';
+            if (level === 'HIGH' || score >= 70) {
+                color = '#ef4444';
+                badgeClass = 'badge bg-danger';
+            } else if (level === 'MEDIUM' || score >= 40) {
+                color = '#f97316';
+                badgeClass = 'badge bg-warning text-dark';
+            }
+
+            if (badge) { badge.className = badgeClass; badge.innerText = `${level} (${rType})`; }
+            if (scoreVal) { scoreVal.innerText = `${score}% (${rType})`; scoreVal.className = `fw-bold fs-6 text-${level === 'HIGH' ? 'danger' : (level === 'MEDIUM' ? 'warning' : 'success')}`; }
+            if (progressBar) {
+                progressBar.style.width = `${score}%`;
+                progressBar.className = `progress-bar bg-${level === 'HIGH' ? 'danger' : (level === 'MEDIUM' ? 'warning' : 'success')}`;
+            }
+
+            // Populate Live Meteorological Telemetry fields
+            const rainEl = document.getElementById('gisRainToday');
+            const tempEl = document.getElementById('gisTempVal');
+            const humEl = document.getElementById('gisHumVal');
+            const windEl = document.getElementById('gisWindVal');
+            const rivEl = document.getElementById('gisRiverVal');
+
+            if (rainEl) rainEl.innerText = (w.rainfall_current_mm !== undefined && w.rainfall_current_mm !== null) ? `${w.rainfall_current_mm} mm` : 'Unavailable';
+            if (tempEl) tempEl.innerText = (w.temperature_c !== undefined && w.temperature_c !== null) ? `${w.temperature_c}°C` : 'Unavailable';
+            if (humEl) humEl.innerText = (w.humidity_pct !== undefined && w.humidity_pct !== null) ? `${w.humidity_pct}%` : 'Unavailable';
+            if (windEl) windEl.innerText = (w.wind_speed_kmh !== undefined && w.wind_speed_kmh !== null) ? `${w.wind_speed_kmh} km/h` : 'Unavailable';
+            if (rivEl) rivEl.innerText = data.river_level ? `${data.river_level}m` : 'Station data unavailable';
+
+            // Populate 7-Day Rainfall Forecast Breakdown
+            const forecastContainer = document.getElementById('gisForecast7dContainer');
+            if (forecastContainer) {
+                if (f7.length > 0) {
+                    let fHtml = '';
+                    f7.forEach((day, idx) => {
+                        fHtml += `
+                            <div class="d-flex justify-content-between align-items-center py-1 border-bottom border-secondary border-opacity-25" style="font-size: 0.72rem;">
+                                <span class="text-secondary">${day.date || ('Day ' + (idx+1))}</span>
+                                <span>Rain: <strong class="text-primary">${day.rain_mm} mm</strong></span>
+                                <span class="text-muted">${day.temp_min}° - ${day.temp_max}°C</span>
+                            </div>
+                        `;
+                    });
+                    forecastContainer.innerHTML = fHtml;
+                } else {
+                    forecastContainer.innerHTML = '<div class="text-muted small">7-Day Forecast unavailable</div>';
+                }
+            }
+
+            // Draw Risk Zone Circle around location on studioMap
+            gisRiskCircle = L.circle([lat, lon], {
+                radius: 2000,
+                color: color,
+                fillColor: color,
+                fillOpacity: 0.25,
+                weight: 2
+            }).addTo(studioMap);
+        } else {
+            if (badge) { badge.className = 'badge bg-secondary'; badge.innerText = 'UNAVAILABLE'; }
+            if (scoreVal) scoreVal.innerText = 'Live risk data unavailable.';
+        }
+    } catch (e) {
+        console.warn('Live GIS risk analysis error:', e);
+        if (badge) { badge.className = 'badge bg-secondary'; badge.innerText = 'UNAVAILABLE'; }
+        if (scoreVal) scoreVal.innerText = 'Live risk data unavailable.';
+    }
+}
+
+function updateGisNearbyShelters(userLat, userLon) {
+    const listContainer = document.getElementById('gisNearbySheltersList');
+    if (!listContainer) return;
+
+    // Clear existing shelter markers
+    gisShelterMarkers.forEach(m => studioMap.removeLayer(m));
+    gisShelterMarkers = [];
+
+    if (!adminShelters || adminShelters.length === 0) {
+        listContainer.innerHTML = '<div class="p-2 text-warning small">No registered shelter found nearby.</div>';
+        return;
+    }
+
+    // Calculate distance to each real admin shelter
+    const listWithDistance = adminShelters.map(s => {
+        const dist = calculateHaversine(userLat, userLon, s.latitude, s.longitude);
+        return { ...s, distance_km: dist };
+    });
+
+    listWithDistance.sort((a, b) => a.distance_km - b.distance_km);
+
+    let html = '';
+    listWithDistance.slice(0, 5).forEach((s, idx) => {
+        // Add green shelter marker on studioMap
+        const sIcon = L.divIcon({
+            className: 'shelter-gis-icon',
+            html: `<div style="background:#10b981; border:2px solid #ffffff; width:18px; height:18px; border-radius:50%; box-shadow:0 0 10px rgba(16,185,129,0.8);"></div>`,
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+        });
+
+        const sm = L.marker([s.latitude, s.longitude], { icon: sIcon })
+            .addTo(studioMap)
+            .bindPopup(`<div class="p-2"><span class="badge bg-success mb-1">SAFE SHELTER</span><h6 class="fw-bold mb-0 text-white">${escapeHtml(s.name)}</h6><div class="small text-muted mt-1">${s.distance_km.toFixed(1)} km away &bull; ${s.available_capacity} beds free</div></div>`);
+        
+        gisShelterMarkers.push(sm);
+
+        html += `
+            <div class="list-group-item bg-dark text-light border-secondary p-2 mb-1 rounded">
+                <div class="d-flex justify-content-between align-items-start">
+                    <strong class="text-white small text-truncate" style="max-width: 140px;">${escapeHtml(s.name)}</strong>
+                    <span class="badge bg-info bg-opacity-25 text-info ms-1">${s.distance_km.toFixed(1)} km</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-1">
+                    <span class="small text-secondary">${s.available_capacity} beds free</span>
+                    <button class="btn btn-xs btn-outline-success py-0 px-2 small" onclick="calculateGisEvacuationRoute(${userLat}, ${userLon}, ${s.latitude}, ${s.longitude}, '${escapeHtml(s.name)}')">Route</button>
+                </div>
+            </div>
+        `;
+    });
+
+    listContainer.innerHTML = html;
+}
+
+async function calculateGisEvacuationRoute(startLat, startLon, destLat, destLon, shelterName) {
+    if (gisEvacRouteLayer) {
+        studioMap.removeLayer(gisEvacRouteLayer);
+        gisEvacRouteLayer = null;
+    }
+
+    try {
+        const csrfToken = getCsrfToken();
+        const res = await fetch('/api/evacuation/route/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                start_lat: startLat,
+                start_lon: startLon,
+                end_lat: destLat,
+                end_lon: destLon
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success && data.result) {
+            const routes = data.result.routes || [];
+            if (routes.length > 0) {
+                const routeObj = routes[0];
+                let coords = [];
+
+                if (Array.isArray(routeObj.coordinates) && routeObj.coordinates.length > 0) {
+                    coords = routeObj.coordinates;
+                } else if (routeObj.overview_polyline && routeObj.overview_polyline.points) {
+                    coords = decodeGooglePolylineJS(routeObj.overview_polyline.points);
+                }
+
+                if (coords.length > 0) {
+                    gisEvacRouteLayer = L.polyline(coords, {
+                        color: '#10b981',
+                        weight: 6,
+                        opacity: 0.9,
+                        lineJoin: 'round'
+                    }).addTo(studioMap);
+
+                    studioMap.fitBounds(gisEvacRouteLayer.getBounds(), { padding: [40, 40] });
+                    showToast(`📍 Live Google Route calculated to ${shelterName} (${routeObj.distance_km || ''} km)`, 'success');
+                } else {
+                    showToast('Route service temporarily unavailable.', 'error');
+                }
+            } else {
+                showToast('Route service temporarily unavailable.', 'error');
+            }
+        } else {
+            showToast('Route service temporarily unavailable.', 'error');
+        }
+    } catch (e) {
+        console.warn('Evacuation route error:', e);
+        showToast('Route service temporarily unavailable.', 'error');
+    }
+}
+
+function acquireGpsForGisMap() {
+    if (!navigator.geolocation) {
+        showToast('Geolocation is not supported by your browser.', 'error');
+        return;
+    }
+
+    showToast('Acquiring real GPS coordinates...', 'info');
+
+    navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+
+            let locName = `GPS Location (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+            try {
+                const geoRes = await fetch(`/api/location/search/?q=${lat.toFixed(4)},${lon.toFixed(4)}`);
+                if (geoRes.ok) {
+                    const geoData = await geoRes.json();
+                    if (geoData.display_name || geoData.place_name) {
+                        locName = geoData.place_name || geoData.display_name;
+                    }
+                }
+            } catch (e) {
+                console.warn('GPS reverse geocode error:', e);
+            }
+
+            document.getElementById('mapSearchInput').value = locName;
+            await processSelectedGisLocation(lat, lon, locName);
+            showToast(`📍 GPS Acquired: ${locName}`, 'success');
+        },
+        (err) => {
+            console.warn('GPS error:', err);
+            let msg = 'Unable to determine your current location.';
+            if (err.code === err.PERMISSION_DENIED) msg = 'Location permission denied.';
+            else if (err.code === err.TIMEOUT) msg = 'Location request timed out. Please try again.';
+            showToast(msg, 'error');
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function focusShelters() {
+    if (studioMap) studioMap.flyTo([20.265, 85.840], 14);
+}
+
+function focusEvacuationRoutes() {
+    if (studioMap) studioMap.flyTo([20.280, 85.835], 14);
+}
+</script>
+{% endblock %}

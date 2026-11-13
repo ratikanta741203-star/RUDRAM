@@ -1,0 +1,710 @@
+{
+  "system_info": {
+    "mode": "RUDRAM_DEMO_DATASET",
+    "version": "1.0.0",
+    "description": "Centralized Odisha-Focused Multi-Hazard Emergency Simulation Dataset",
+    "source_label": "RUDRAM Central Demo Dataset"
+  },
+  "risk_zones": [
+    {
+      "name": "Cuttack Mahanadi-Kathajodi Riverine Basin",
+      "district": "Cuttack",
+      "state": "Odisha",
+      "risk_level": "CRITICAL",
+      "risk_score": 88,
+      "disaster_type": "FLOOD",
+      "center_lat": 20.4625,
+      "center_lon": 85.8828,
+      "population_count": 18500,
+      "vulnerable_buildings": 1420,
+      "nearest_river": "Mahanadi & Kathajodi Rivers",
+      "river_distance": "0.4 km",
+      "elevation_m": 12.0,
+      "source": "RUDRAM Demo Dataset",
+      "is_demo": true,
+      "polygon_geojson": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[
+            [85.8428, 20.4375],
+            [85.9228, 20.4375],
+            [85.9228, 20.4875],
+            [85.8428, 20.4875],
+            [85.8428, 20.4375]
+          ]]
+        }
+      }
+    },
+    {
+      "name": "Kendrapara Deltaic Overflow Zone",
+      "district": "Kendrapara",
+      "state": "Odisha",
+      "risk_level": "CRITICAL",
+      "risk_score": 89,
+      "disaster_type": "FLOOD",
+      "center_lat": 20.5005,
+      "center_lon": 86.4215,
+      "population_count": 19800,
+      "vulnerable_buildings": 1560,
+      "nearest_river": "Brahmani & Baitarani Rivers",
+      "river_distance": "0.5 km",
+      "elevation_m": 5.0,
+      "source": "RUDRAM Demo Dataset",
+      "is_demo": true,
+      "polygon_geojson": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[
+            [86.3815, 20.4755],
+            [86.4615, 20.4755],
+            [86.4615, 20.5255],
+            [86.3815, 20.5255],
+            [86.3815, 20.4755]
+          ]]
+        }
+      }
+    },
+    {
+      "name": "Jagatsinghpur Mahanadi Delta Lowlands",
+      "district": "Jagatsinghpur",
+      "state": "Odisha",
+      "risk_level": "CRITICAL",
+      "risk_score": 82,
+      "disaster_type": "FLOOD",
+      "center_lat": 20.2680,
+      "center_lon": 86.1720,
+      "population_count": 16400,
+      "vulnerable_buildings": 1280,
+      "nearest_river": "Mahanadi Estuary & Devi River",
+      "river_distance": "0.6 km",
+      "elevation_m": 7.0,
+      "source": "RUDRAM Demo Dataset",
+      "is_demo": true,
+      "polygon_geojson": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[
+            [86.1320, 20.2430],
+            [86.2120, 20.2430],
+            [86.2120, 20.2930],
+            [86.1320, 20.2930],
+            [86.1320, 20.2430]
+          ]]
+        }
+      }
+    },
+    {
+      "name": "Bhadrak Salandi Catchment Depression",
+      "district": "Bhadrak",
+      "state": "Odisha",
+      "risk_level": "HIGH",
+      "risk_score": 78,
+      "disaster_type": "FLOOD",
+      "center_lat": 21.0574,
+      "center_lon": 86.4965,
+      "population_count": 11500,
+      "vulnerable_buildings": 840,
+      "nearest_river": "Salandi & Baitarani Rivers",
+      "river_distance": "1.0 km",
+      "elevation_m": 9.0,
+      "source": "RUDRAM Demo Dataset",
+      "is_demo": true,
+      "polygon_geojson": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[
+            [86.4565, 21.0324],
+            [86.5365, 21.0324],
+            [86.5365, 21.0824],
+            [86.4565, 21.0824],
+            [86.4565, 21.0324]
+          ]]
+        }
+      }
+    },
+    {
+      "name": "Baleswar Subarnarekha Basin",
+      "district": "Baleswar",
+      "state": "Odisha",
+      "risk_level": "HIGH",
+      "risk_score": 76,
+      "disaster_type": "FLOOD",
+      "center_lat": 21.4934,
+      "center_lon": 86.9135,
+      "population_count": 16200,
+      "vulnerable_buildings": 1100,
+      "nearest_river": "Subarnarekha River",
+      "river_distance": "0.6 km",
+      "elevation_m": 11.0,
+      "source": "RUDRAM Demo Dataset",
+      "is_demo": true,
+      "polygon_geojson": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[
+            [86.8735, 21.4684],
+            [86.9535, 21.4684],
+            [86.9535, 21.5184],
+            [86.8735, 21.5184],
+            [86.8735, 21.4684]
+          ]]
+        }
+      }
+    },
+    {
+      "name": "Jajpur Baitarani Embankment Zone",
+      "district": "Jajpur",
+      "state": "Odisha",
+      "risk_level": "HIGH",
+      "risk_score": 75,
+      "disaster_type": "FLOOD",
+      "center_lat": 20.8520,
+      "center_lon": 86.3310,
+      "population_count": 12800,
+      "vulnerable_buildings": 920,
+      "nearest_river": "Baitarani River",
+      "river_distance": "0.8 km",
+      "elevation_m": 14.0,
+      "source": "RUDRAM Demo Dataset",
+      "is_demo": true,
+      "polygon_geojson": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[
+            [86.2910, 20.8270],
+            [86.3710, 20.8270],
+            [86.3710, 20.8770],
+            [86.2910, 20.8770],
+            [86.2910, 20.8270]
+          ]]
+        }
+      }
+    },
+    {
+      "name": "Puri Coastal Inundation & Lagoon Belt",
+      "district": "Puri",
+      "state": "Odisha",
+      "risk_level": "HIGH",
+      "risk_score": 68,
+      "disaster_type": "CYCLONE",
+      "center_lat": 19.8135,
+      "center_lon": 85.8312,
+      "population_count": 14200,
+      "vulnerable_buildings": 980,
+      "nearest_river": "Bhargavi River & Chilika Lagoon",
+      "river_distance": "1.2 km",
+      "elevation_m": 6.0,
+      "source": "RUDRAM Demo Dataset",
+      "is_demo": true,
+      "polygon_geojson": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[
+            [85.7912, 19.7885],
+            [85.8712, 19.7885],
+            [85.8712, 19.8385],
+            [85.7912, 19.8385],
+            [85.7912, 19.7885]
+          ]]
+        }
+      }
+    },
+    {
+      "name": "Sambalpur Hirakud Downstream Basin",
+      "district": "Sambalpur",
+      "state": "Odisha",
+      "risk_level": "HIGH",
+      "risk_score": 62,
+      "disaster_type": "FLOOD",
+      "center_lat": 21.4669,
+      "center_lon": 83.9812,
+      "population_count": 13800,
+      "vulnerable_buildings": 920,
+      "nearest_river": "Mahanadi River (Hirakud Sluice Discharge)",
+      "river_distance": "0.7 km",
+      "elevation_m": 150.0,
+      "source": "RUDRAM Demo Dataset",
+      "is_demo": true,
+      "polygon_geojson": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[
+            [83.9412, 21.4419],
+            [84.0212, 21.4419],
+            [84.0212, 21.4919],
+            [83.9412, 21.4919],
+            [83.9412, 21.4419]
+          ]]
+        }
+      }
+    },
+    {
+      "name": "Bhubaneswar Daya-Kuakhai Floodplain",
+      "district": "Khordha",
+      "state": "Odisha",
+      "risk_level": "MODERATE",
+      "risk_score": 48,
+      "disaster_type": "FLOOD",
+      "center_lat": 20.2961,
+      "center_lon": 85.8245,
+      "population_count": 24000,
+      "vulnerable_buildings": 1850,
+      "nearest_river": "Kuakhai & Daya Rivers",
+      "river_distance": "0.8 km",
+      "elevation_m": 14.0,
+      "source": "RUDRAM Demo Dataset",
+      "is_demo": true,
+      "polygon_geojson": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[
+            [85.7845, 20.2711],
+            [85.8645, 20.2711],
+            [85.8645, 20.3211],
+            [85.7845, 20.3211],
+            [85.7845, 20.2711]
+          ]]
+        }
+      }
+    },
+    {
+      "name": "Ganjam Rushikulya Riverine Zone",
+      "district": "Ganjam",
+      "state": "Odisha",
+      "risk_level": "MODERATE",
+      "risk_score": 42,
+      "disaster_type": "FLOOD",
+      "center_lat": 19.3149,
+      "center_lon": 84.7941,
+      "population_count": 9200,
+      "vulnerable_buildings": 610,
+      "nearest_river": "Rushikulya River",
+      "river_distance": "1.5 km",
+      "elevation_m": 18.0,
+      "source": "RUDRAM Demo Dataset",
+      "is_demo": true,
+      "polygon_geojson": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[
+            [84.7541, 19.2899],
+            [84.8341, 19.2899],
+            [84.8341, 19.3399],
+            [84.7541, 19.3399],
+            [84.7541, 19.2899]
+          ]]
+        }
+      }
+    }
+  ],
+  "risk_predictions": [
+    {
+      "location_name": "Bhubaneswar Urban & Riverine Catchment",
+      "district": "Khordha",
+      "state": "Odisha",
+      "latitude": 20.2961,
+      "longitude": 85.8245,
+      "risk_score": 87.5,
+      "risk_level": "CRITICAL",
+      "disaster_type": "FLOOD",
+      "confidence": 0.92,
+      "rainfall_current_mm": 28.5,
+      "rainfall_24h_mm": 195.4,
+      "rainfall_7d_mm": 360.0,
+      "rainfall_forecast_24h_mm": 85.0,
+      "elevation_m": 14.0,
+      "distance_to_water_km": 0.8,
+      "river_water_level_m": 14.85,
+      "danger_water_level_m": 15.0,
+      "contributing_factors": [
+        "Monsoon cloudburst precipitation",
+        "Low urban terrain elevation (14m)",
+        "Kuakhai & Daya river level near danger mark",
+        "High soil saturation runoff"
+      ],
+      "recommended_action": "Evacuate low-lying Sundarpada & Rasulgarh sectors to BJB College Shelter."
+    },
+    {
+      "location_name": "Cuttack Mahanadi-Kathajodi Riverine Basin",
+      "district": "Cuttack",
+      "state": "Odisha",
+      "latitude": 20.4625,
+      "longitude": 85.8828,
+      "risk_score": 88.0,
+      "risk_level": "CRITICAL",
+      "disaster_type": "FLOOD",
+      "confidence": 0.94,
+      "rainfall_current_mm": 32.0,
+      "rainfall_24h_mm": 210.0,
+      "rainfall_7d_mm": 390.0,
+      "rainfall_forecast_24h_mm": 92.0,
+      "elevation_m": 12.0,
+      "distance_to_water_km": 0.4,
+      "river_water_level_m": 15.80,
+      "danger_water_level_m": 15.50,
+      "contributing_factors": [
+        "Upstream Hirakud dam discharge",
+        "Kathajodi river overflow",
+        "Ring road embankment water pressure"
+      ],
+      "recommended_action": "Deploy ODRAF rescue boats at Matagajpur embankment."
+    },
+    {
+      "location_name": "Puri Coastal Lagoon & Inundation Belt",
+      "district": "Puri",
+      "state": "Odisha",
+      "latitude": 19.8135,
+      "longitude": 85.8312,
+      "risk_score": 78.0,
+      "risk_level": "HIGH",
+      "disaster_type": "CYCLONE",
+      "confidence": 0.88,
+      "rainfall_current_mm": 22.0,
+      "rainfall_24h_mm": 160.0,
+      "rainfall_7d_mm": 290.0,
+      "rainfall_forecast_24h_mm": 70.0,
+      "elevation_m": 6.0,
+      "distance_to_water_km": 1.2,
+      "river_water_level_m": 6.20,
+      "danger_water_level_m": 6.50,
+      "contributing_factors": [
+        "Coastal storm surge elevation",
+        "Chilika lagoon backwater overflow",
+        "High wind gusts (65 km/h)"
+      ],
+      "recommended_action": "Move coastal fisherfolk to Puri Zilla School Shelter."
+    },
+    {
+      "location_name": "Baleswar Subarnarekha Basin",
+      "district": "Baleswar",
+      "state": "Odisha",
+      "latitude": 21.4934,
+      "longitude": 86.9135,
+      "risk_score": 76.0,
+      "risk_level": "HIGH",
+      "disaster_type": "FLOOD",
+      "confidence": 0.86,
+      "rainfall_current_mm": 18.0,
+      "rainfall_24h_mm": 145.0,
+      "rainfall_7d_mm": 280.0,
+      "rainfall_forecast_24h_mm": 65.0,
+      "elevation_m": 11.0,
+      "distance_to_water_km": 0.6,
+      "river_water_level_m": 10.10,
+      "danger_water_level_m": 10.36,
+      "contributing_factors": [
+        "Jharkhand upper catchment rainfall",
+        "Subarnarekha river discharge",
+        "Low coastal plain drainage"
+      ],
+      "recommended_action": "Issue evacuation alert for Rajghat low-lying villages."
+    },
+    {
+      "location_name": "Kendrapara Deltaic Overflow Zone",
+      "district": "Kendrapara",
+      "state": "Odisha",
+      "latitude": 20.5005,
+      "longitude": 86.4215,
+      "risk_score": 89.0,
+      "risk_level": "CRITICAL",
+      "disaster_type": "FLOOD",
+      "confidence": 0.95,
+      "rainfall_current_mm": 35.0,
+      "rainfall_24h_mm": 230.0,
+      "rainfall_7d_mm": 410.0,
+      "rainfall_forecast_24h_mm": 105.0,
+      "elevation_m": 5.0,
+      "distance_to_water_km": 0.5,
+      "river_water_level_m": 8.90,
+      "danger_water_level_m": 8.70,
+      "contributing_factors": [
+        "Brahmani & Baitarani combined delta flood",
+        "Tidal surge obstruction",
+        "Flat coastal elevation (5m)"
+      ],
+      "recommended_action": "High alert: Open all 45 cyclone shelters in Kendrapara delta."
+    }
+  ],
+  "rivers": [
+    {
+      "name": "Mahanadi River",
+      "station_name": "Naraj Gauge Station",
+      "district": "Cuttack",
+      "latitude": 20.4625,
+      "longitude": 85.7828,
+      "current_water_level_m": 26.40,
+      "warning_level_m": 25.50,
+      "danger_level_m": 26.80,
+      "highest_flood_level_m": 27.25,
+      "discharge_cusecs": 850000,
+      "trend": "RISING (+0.15 m/hr)",
+      "status": "WARNING"
+    },
+    {
+      "name": "Kathajodi River",
+      "station_name": "Matagajpur Station",
+      "district": "Cuttack",
+      "latitude": 20.4410,
+      "longitude": 85.9120,
+      "current_water_level_m": 15.80,
+      "warning_level_m": 15.00,
+      "danger_level_m": 15.50,
+      "highest_flood_level_m": 16.10,
+      "discharge_cusecs": 340000,
+      "trend": "CRITICAL OVERFLOW (+0.20 m/hr)",
+      "status": "CRITICAL"
+    },
+    {
+      "name": "Kuakhai River",
+      "station_name": "Barang Gauge",
+      "district": "Khordha",
+      "latitude": 20.3540,
+      "longitude": 85.8390,
+      "current_water_level_m": 14.85,
+      "warning_level_m": 14.20,
+      "danger_level_m": 15.00,
+      "highest_flood_level_m": 15.45,
+      "discharge_cusecs": 120000,
+      "trend": "RISING (+0.12 m/hr)",
+      "status": "WARNING"
+    },
+    {
+      "name": "Daya River",
+      "station_name": "Sundarpada Bridge Gauge",
+      "district": "Khordha",
+      "latitude": 20.2410,
+      "longitude": 85.8120,
+      "current_water_level_m": 15.20,
+      "warning_level_m": 14.50,
+      "danger_level_m": 15.00,
+      "highest_flood_level_m": 15.60,
+      "discharge_cusecs": 95000,
+      "trend": "OVERFLOWING (+0.25 m/hr)",
+      "status": "CRITICAL"
+    },
+    {
+      "name": "Subarnarekha River",
+      "station_name": "Rajghat Gauge Station",
+      "district": "Baleswar",
+      "latitude": 21.6820,
+      "longitude": 87.1420,
+      "current_water_level_m": 10.10,
+      "warning_level_m": 9.45,
+      "danger_level_m": 10.36,
+      "highest_flood_level_m": 11.20,
+      "discharge_cusecs": 180000,
+      "trend": "STABLE RISING",
+      "status": "WARNING"
+    }
+  ],
+  "weather": {
+    "temperature_c": 27.5,
+    "humidity_pct": 92.0,
+    "rainfall_current_mm": 28.5,
+    "rainfall_24h_mm": 195.4,
+    "wind_speed_kmh": 42.0,
+    "wind_direction": "SSW",
+    "pressure_hpa": 998.5,
+    "weather_condition": "Heavy Monsoon Precipitation & Squall Winds",
+    "station_name": "Bhubaneswar IMD Observatory (Demo Dataset)"
+  },
+  "rainfall": {
+    "rainfall_1h_mm": 28.5,
+    "rainfall_3h_mm": 72.0,
+    "rainfall_6h_mm": 124.0,
+    "rainfall_12h_mm": 165.0,
+    "rainfall_24h_mm": 195.4,
+    "rainfall_7d_mm": 360.0,
+    "intensity": "HEAVY",
+    "source": "GPM IMERG & Ground Sensor Network (RUDRAM Demo)"
+  },
+  "historical_floods": [
+    {
+      "event_id": "OD-FL-2011",
+      "event_name": "2011 Mahanadi River Delta Severe Flood",
+      "year": 2011,
+      "river": "Mahanadi & Tributaries",
+      "districts_affected": ["Cuttack", "Puri", "Kendrapara", "Jagatsinghpur"],
+      "peak_discharge_cusecs": 1360000,
+      "population_affected": 3400000,
+      "severity": "CRITICAL"
+    },
+    {
+      "event_id": "OD-CY-2019",
+      "event_name": "2019 Extremely Severe Cyclonic Storm Fani",
+      "year": 2019,
+      "river": "Coastal Inundation",
+      "districts_affected": ["Puri", "Khordha", "Cuttack", "Ganjam"],
+      "peak_wind_speed_kmh": 215,
+      "population_affected": 15000000,
+      "severity": "EXTREME"
+    }
+  ],
+  "shelters": [
+    {
+      "name": "BJB College High-Ground Multi-Purpose Shelter",
+      "district": "Khordha",
+      "city": "Bhubaneswar",
+      "latitude": 20.2541,
+      "longitude": 85.8342,
+      "capacity": 1200,
+      "occupied": 450,
+      "available_capacity": 750,
+      "elevation_m": 22.0,
+      "status": "OPEN",
+      "has_icu": true,
+      "has_power_backup": true,
+      "food_kits_available": 1800,
+      "contact_number": "+91 674 2430911"
+    },
+    {
+      "name": "Capital High School Emergency Shelter",
+      "district": "Khordha",
+      "city": "Bhubaneswar",
+      "latitude": 20.2712,
+      "longitude": 85.8215,
+      "capacity": 800,
+      "occupied": 320,
+      "available_capacity": 480,
+      "elevation_m": 18.0,
+      "status": "OPEN",
+      "has_icu": false,
+      "has_power_backup": true,
+      "food_kits_available": 1100,
+      "contact_number": "+91 674 2390124"
+    },
+    {
+      "name": "Cuttack Municipal Indoor Stadium Shelter",
+      "district": "Cuttack",
+      "city": "Cuttack",
+      "latitude": 20.4670,
+      "longitude": 85.8750,
+      "capacity": 2000,
+      "occupied": 950,
+      "available_capacity": 1050,
+      "elevation_m": 16.0,
+      "status": "OPEN",
+      "has_icu": true,
+      "has_power_backup": true,
+      "food_kits_available": 2500,
+      "contact_number": "+91 671 2301456"
+    },
+    {
+      "name": "Puri Zilla School Multi-Purpose Cyclone Shelter",
+      "district": "Puri",
+      "city": "Puri",
+      "latitude": 19.8090,
+      "longitude": 85.8280,
+      "capacity": 1500,
+      "occupied": 680,
+      "available_capacity": 820,
+      "elevation_m": 14.0,
+      "status": "OPEN",
+      "has_icu": false,
+      "has_power_backup": true,
+      "food_kits_available": 2000,
+      "contact_number": "+91 6752 222180"
+    }
+  ],
+  "evacuation_routes": [
+    {
+      "route_name": "Janpath Ridge Evacuation Highway (Route A)",
+      "origin": "Sundarpada Lowlands",
+      "destination": "BJB College Shelter",
+      "distance_km": 3.8,
+      "estimated_travel_min": 12,
+      "road_status": "CLEAR_ELEVATED",
+      "submerged_sections": 0,
+      "is_recommended": true
+    },
+    {
+      "route_name": "Cuttack Ring Road Ridge Bypass (Route B)",
+      "origin": "Kathajodi Embankment Sector",
+      "destination": "Jawaharlal Nehru Indoor Stadium Shelter",
+      "distance_km": 4.5,
+      "estimated_travel_min": 15,
+      "road_status": "CLEAR_ELEVATED",
+      "submerged_sections": 0,
+      "is_recommended": true
+    }
+  ],
+  "resources": [
+    {
+      "name": "ODRAF Inflatable Rescue Boats (Unit 1)",
+      "resource_type": "RESCUE_BOAT",
+      "quantity": 12,
+      "available": 8,
+      "location": "State Emergency Central Depot, Bhubaneswar",
+      "status": "DISPATCHED"
+    },
+    {
+      "name": "Emergency Advanced Life Support Ambulances",
+      "resource_type": "AMBULANCE",
+      "quantity": 25,
+      "available": 18,
+      "location": "Capital Hospital Depot",
+      "status": "READY"
+    },
+    {
+      "name": "High-Capacity Submersible Dewatering Pumps",
+      "resource_type": "PUMP",
+      "quantity": 40,
+      "available": 32,
+      "location": "BMC Drainage Depot",
+      "status": "OPERATIONAL"
+    }
+  ],
+  "fire_hotspots": [
+    {
+      "latitude": 20.812,
+      "longitude": 85.124,
+      "brightness_k": 325.4,
+      "confidence": 84,
+      "district": "Angul",
+      "source": "NASA FIRMS MODIS/VIIRS (Demo)"
+    }
+  ],
+  "alerts": [
+    {
+      "title": "RED WARNING: Daya River Embankment Overflow",
+      "message": "Severe inundation along Sundarpada lowlands. Water rising fast. Move to high-ground shelters.",
+      "severity": "CRITICAL",
+      "disaster_type": "FLOOD",
+      "location_name": "Sundarpada & Rasulgarh, Khordha",
+      "created_at": "2026-08-22T20:00:00Z"
+    },
+    {
+      "title": "ORANGE ALERT: Heavy Monsoon Downpour Forecast",
+      "message": "Precipitation exceeding 180mm expected across Cuttack & Puri districts over next 24 hours.",
+      "severity": "HIGH",
+      "disaster_type": "RAINFALL",
+      "location_name": "Cuttack & Puri Districts",
+      "created_at": "2026-08-22T18:30:00Z"
+    }
+  ],
+  "incidents": [
+    {
+      "title": "Submerged Culvert Barricade Required",
+      "location": "Sundarpada Canal Road, Bhubaneswar",
+      "severity": "HIGH",
+      "status": "IN_PROGRESS",
+      "assigned_team": "ODRAF Team 2"
+    }
+  ],
+  "assistant_kb": {
+    "flood_risk_cuttack": "Cuttack is currently under CRITICAL Flood Warning (88% Risk Score). Upstream Hirakud dam discharge and Kathajodi river level (15.80m vs 15.50m danger mark) indicate high overflow risk. Recommended shelters: Cuttack Municipal Indoor Stadium Shelter.",
+    "flood_risk_bhubaneswar": "Bhubaneswar Urban Region risk score is 87.5% (CRITICAL). Heavy precipitation (195.4mm/24h) and Daya river water level (15.20m) affect low-lying sectors. Recommended shelter: BJB College High-Ground Shelter.",
+    "available_shelters": "Active open shelters in Khordha & Cuttack: 1) BJB College Shelter (750 beds available, ICU equipped), 2) Capital High School Shelter (480 beds available), 3) Cuttack Indoor Stadium Shelter (1,050 beds available).",
+    "rivers_warning": "Rivers currently above warning/danger level in Odisha: Daya River (15.20m - CRITICAL OVERFLOW), Kathajodi River (15.80m - CRITICAL OVERFLOW), Kuakhai River (14.85m - WARNING), Subarnarekha River (10.10m - WARNING)."
+  }
+}

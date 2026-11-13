@@ -1,0 +1,37 @@
+{
+  "nasa_power": {
+    "source_name": "NASA POWER Climatology and Daily Meteorology",
+    "source_url": "https://power.larc.nasa.gov",
+    "dataset_name": "POWER LARC Daily Point / Regional Gridded",
+    "coverage": "State of Odisha, India (17.78\u00b0N - 22.57\u00b0N, 81.39\u00b0E - 87.53\u00b0E)",
+    "start_date": "2005-01-01",
+    "end_date": "2024-12-31",
+    "total_years": 20,
+    "variables": [
+      "PRECTOTCORR",
+      "T2M",
+      "RH2M",
+      "WS10M"
+    ],
+    "license": "Public Domain (NASA Open Data Policy)"
+  },
+  "srtm_dem": {
+    "source_name": "NASA SRTM 30m Global Digital Elevation Model",
+    "source_url": "https://earthexplorer.usgs.gov",
+    "dataset_name": "SRTM1 Arc-Second Global (30m)",
+    "variables": [
+      "elevation_m",
+      "slope_deg",
+      "topographic_wetness_index"
+    ],
+    "license": "Public Domain"
+  },
+  "flood_ground_truth": {
+    "source_name": "OSDMA / CWC / Dartmouth Flood Observatory",
+    "source_url": "https://www.osdma.org / https://cwc.gov.in",
+    "dataset_name": "Odisha Historical Flood Catalog (2005-2024)",
+    "number_of_events": 15,
+    "target_variable": "target_flood_occurrence (0 = No Inundation, 1 = Documented Historical Inundation)",
+    "license": "Official Open Government Data (OGD) / Disaster Management Records"
+  }
+}

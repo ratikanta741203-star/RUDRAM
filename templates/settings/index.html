@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM - Settings & System Configuration{% endblock %}
+{% block meta_description %}Review account preferences, platform configuration, and connected data sources for RUDRAM disaster intelligence.{% endblock %}
+{% block page_heading %}Settings & System Telemetry{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<!-- Light / Dark Theme Preference Control -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="rudram-card border border-secondary border-opacity-50">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <h6 class="fw-bold mb-1 text-white d-flex align-items-center gap-2">
+                        <i data-lucide="sun-moon" class="text-warning" style="width: 20px; height: 20px;"></i>
+                        APPEARANCE &amp; THEME PREFERENCE
+                    </h6>
+                    <div class="small text-secondary">Switch between Light and Dark interface modes. Default for new users is Light Mode.</div>
+                </div>
+                <div class="btn-group" role="group" aria-label="Theme Mode Switch">
+                    <input type="radio" class="btn-check" name="themeRadio" id="themeRadioLight" value="light" autocomplete="off" onchange="switchRudramTheme('light')">
+                    <label class="btn btn-outline-info px-3" for="themeRadioLight"><i data-lucide="sun" class="me-1" style="width: 15px; height: 15px;"></i>Light Mode</label>
+
+                    <input type="radio" class="btn-check" name="themeRadio" id="themeRadioDark" value="dark" autocomplete="off" onchange="switchRudramTheme('dark')">
+                    <label class="btn btn-outline-info px-3" for="themeRadioDark"><i data-lucide="moon" class="me-1" style="width: 15px; height: 15px;"></i>Dark Mode</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.profile.role == 'ADMIN' or user.is_superuser or USER_ROLE == 'ADMIN' %}
+<!-- Admin Global Demo Data Control Card (ADMIN ONLY) -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="rudram-card border-warning border-opacity-50">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <h6 class="fw-bold mb-1 text-warning d-flex align-items-center gap-2">
+                        <i data-lucide="database" style="width: 20px; height: 20px;"></i>
+                        GLOBAL DEMO DATA MODE CONTROL
+                    </h6>
+                    <div class="small text-secondary">Controls whether the platform operates on <strong>LIVE DATA ONLY</strong> or engages <strong>SIMULATION / DEMO DATA</strong>. Default is <strong>OFF (Live Data Only)</strong>. Admin privilege required to toggle.</div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge {% if DEMO_MODE %}bg-warning text-dark{% else %}bg-success text-white{% endif %} fs-6 px-3 py-2 fw-bold" id="demoModeBadge">
+                        {% if DEMO_MODE %}DEMO MODE (ON){% else %}LIVE DATA (OFF){% endif %}
+                    </span>
+                    <div class="btn-group" role="group" aria-label="Demo Mode Toggle">
+                        <input type="radio" class="btn-check" name="demoModeRadio" id="demoModeOff" value="false" autocomplete="off" {% if not DEMO_MODE %}checked{% endif %} onchange="toggleAdminDemoMode(false)">
+                        <label class="btn btn-outline-success px-3 fw-bold" for="demoModeOff"><i data-lucide="check-circle" class="me-1" style="width: 15px; height: 15px;"></i>OFF (Live Data)</label>
+
+                        <input type="radio" class="btn-check" name="demoModeRadio" id="demoModeOn" value="true" autocomplete="off" {% if DEMO_MODE %}checked{% endif %} onchange="toggleAdminDemoMode(true)">
+                        <label class="btn btn-outline-warning px-3 fw-bold" for="demoModeOn"><i data-lucide="play-circle" class="me-1" style="width: 15px; height: 15px;"></i>ON (Demo Mode)</label>
+                    </div>
+                </div>
+            </div>
+            <div id="demoModeStatusAlert" class="alert alert-dark py-2 px-3 small mt-3 mb-0 border-secondary" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function toggleAdminDemoMode(enableDemo) {
+    const alertBox = document.getElementById('demoModeStatusAlert');
+    const badgeBox = document.getElementById('demoModeBadge');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+    try {
+        const res = await fetch('/api/admin/demo-mode/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ demo_mode: enableDemo })
+        });
+
+        if (!res.ok) {
+            if (alertBox) {
+                alertBox.style.display = 'block';
+                alertBox.className = 'alert alert-danger py-2 px-3 small mt-3 mb-0';
+                alertBox.innerText = `Access Denied (HTTP ${res.status}). Only system administrators can change Demo Mode.`;
+            }
+            return;
+        }
+
+        const data = await res.json();
+        if (data.success) {
+            const isDemo = data.demo_mode;
+            if (badgeBox) {
+                badgeBox.innerText = isDemo ? 'DEMO MODE (ON)' : 'LIVE DATA (OFF)';
+                badgeBox.className = isDemo ? 'badge bg-warning text-dark fs-6 px-3 py-2 fw-bold' : 'badge bg-success text-white fs-6 px-3 py-2 fw-bold';
+            }
+
+            if (alertBox) {
+                alertBox.style.display = 'block';
+                alertBox.className = isDemo ? 'alert alert-warning py-2 px-3 small mt-3 mb-0' : 'alert alert-success py-2 px-3 small mt-3 mb-0';
+                alertBox.innerText = isDemo ? '⚠️ Demo Data Mode is now ENABLED globally. Platform features will use simulation datasets.' : '✅ Live Data Mode is now ENABLED globally (OFF). Platform features will use live APIs only.';
+            }
+
+            if (typeof showToast === 'function') {
+                showToast(isDemo ? 'Demo Data Mode Enabled' : 'Live Data Mode Enabled (OFF)', isDemo ? 'warning' : 'success');
+            }
+        }
+    } catch (e) {
+        console.error('Demo Mode toggle error:', e);
+        if (alertBox) {
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert alert-danger py-2 px-3 small mt-3 mb-0';
+            alertBox.innerText = 'Network error while updating global Demo Mode.';
+        }
+    }
+}
+</script>
+
+<!-- Admin API Health Monitoring Panel (ADMIN ONLY) -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="rudram-card border-info border-opacity-50">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h6 class="fw-bold mb-0 text-info d-flex align-items-center gap-2">
+                        <i data-lucide="activity" style="width: 18px; height: 18px;"></i>
+                        Admin API Health &amp; Services Telemetry
+                    </h6>
+                    <div class="small text-secondary">Real-time health diagnostics across Google Maps Platform, Weather Telemetry, Remote Sensing, &amp; ML Models. (Admin Only)</div>
+                </div>
+                <button class="btn btn-sm btn-info fw-bold text-dark px-3" id="btnRunApiHealthCheck" onclick="runAdminApiHealthDiagnostics()">
+                    <i data-lucide="play" class="me-1" style="width: 14px; height: 14px;"></i>Check APIs
+                </button>
+            </div>
+
+            <div id="apiHealthStatusAlert" class="alert alert-dark py-2 px-3 small mb-3 border-secondary" style="display: none;"></div>
+
+            <div class="table-responsive">
+                <table class="table table-dark table-hover small mb-0" style="font-size: 0.8rem;">
+                    <thead>
+                        <tr class="text-secondary">
+                            <th>API / SERVICE NAME</th>
+                            <th>CATEGORY</th>
+                            <th>HEALTH STATUS</th>
+                            <th>RESPONSE LATENCY</th>
+                            <th>DETAILS / TELEMETRY</th>
+                        </tr>
+                    </thead>
+                    <tbody id="apiHealthTableBody">
+                        <tr><td colspan="5" class="text-muted text-center py-3">Click "Check APIs" above to run real-time diagnostic health check.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function runAdminApiHealthDiagnostics() {
+    const btn = document.getElementById('btnRunApiHealthCheck');
+    const tbody = document.getElementById('apiHealthTableBody');
+    const alertBox = document.getElementById('apiHealthStatusAlert');
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Running Health Check...';
+    }
+
+    try {
+        const res = await fetch('/api/admin/api-health/');
+        if (!res.ok) {
+            if (alertBox) {
+                alertBox.style.display = 'block';
+                alertBox.className = 'alert alert-danger py-2 px-3 small mb-3';
+                alertBox.innerText = `Health Check Access Denied (HTTP ${res.status}). Admin privileges required.`;
+            }
+            return;
+        }
+
+        const data = await res.json();
+        if (data.success && Array.isArray(data.services)) {
+            let html = '';
+            data.services.forEach(s => {
+                let badgeClass = 'bg-success text-white';
+                if (s.status === 'DEGRADED') badgeClass = 'bg-warning text-dark';
+                else if (s.status === 'FAILED' || s.status === 'TIMEOUT') badgeClass = 'bg-danger text-white';
+                else if (s.status === 'NOT_CONFIGURED') badgeClass = 'bg-secondary text-white';
+
+                html += `
+                    <tr>
+                        <td><strong class="text-white">${s.service}</strong></td>
+                        <td><span class="badge bg-dark border border-secondary text-info">${s.category}</span></td>
+                        <td><span class="badge ${badgeClass} fw-bold">${s.status}</span></td>
+                        <td class="font-monospace text-info">${s.response_time_ms > 0 ? s.response_time_ms + ' ms' : '--'}</td>
+                        <td class="text-secondary">${s.details || 'Operational'}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+
+            if (alertBox) {
+                alertBox.style.display = 'block';
+                alertBox.className = 'alert alert-success py-2 px-3 small mb-3';
+                alertBox.innerText = `✅ Diagnostic Health Check Completed — ${data.healthy_services}/${data.total_services} Services Healthy.`;
+            }
+        }
+    } catch (e) {
+        console.error('API Health check error:', e);
+        if (alertBox) {
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert alert-danger py-2 px-3 small mb-3';
+            alertBox.innerText = 'Network error while executing API Health Diagnostic Check.';
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="play" class="me-1" style="width: 14px; height: 14px;"></i>Check APIs';
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+</script>
+{% endif %}
+
+<!-- About Us Card -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="rudram-card border-info border-opacity-25">
+            <h6 class="fw-bold mb-2 text-info d-flex align-items-center gap-2">
+                <i data-lucide="shield" style="width: 18px; height: 18px;"></i>
+                ABOUT US — RUDRAM PLATFORM
+            </h6>
+            <p class="small text-secondary mb-3">
+                <strong>RUDRAM</strong> is an advanced AI-powered disaster intelligence and emergency response platform engineered for multi-hazard risk prediction, real-time meteorological tracking, automated GIS mapping, and safe shelter navigation.
+            </p>
+            <div class="p-3 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25 small">
+                <div class="fw-bold text-white mb-1">Purpose &amp; Mission:</div>
+                <div class="text-secondary">To empower disaster management authorities, emergency first responders, and citizens with real-time risk telemetry, calibrated XGBoost prediction models, live shelter routing, and situation briefing reports to protect human life and infrastructure.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Policy Card -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="rudram-card border-secondary border-opacity-25">
+            <h6 class="fw-bold mb-3 text-white d-flex align-items-center gap-2">
+                <i data-lucide="file-check" style="width: 18px; height: 18px;"></i>
+                PLATFORM POLICIES &amp; RESPONSIBILITIES
+            </h6>
+            <div class="row g-3 small text-secondary">
+                <div class="col-md-6">
+                    <div class="p-3 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25 h-100">
+                        <div class="fw-bold text-white mb-1"><i data-lucide="database" class="me-1 text-primary"></i>1. Data Usage &amp; Telemetry</div>
+                        <div>RUDRAM aggregates live weather data from Open-Meteo, satellite observations from NASA Earthdata, and geographical boundaries from official GIS feeds for non-commercial disaster mitigation.</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25 h-100">
+                        <div class="fw-bold text-white mb-1"><i data-lucide="lock" class="me-1 text-success"></i>2. User Privacy</div>
+                        <div>Browser GPS location data accessed for real-time risk assessment is processed locally on-device and is never shared, sold, or retained for tracking purposes.</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25 h-100">
+                        <div class="fw-bold text-white mb-1"><i data-lucide="alert-triangle" class="me-1 text-warning"></i>3. Emergency Information Disclaimer</div>
+                        <div>RUDRAM ML models provide probabilistic risk assessments. During active emergency evacuations, always prioritize official directives from OSDMA, Special Relief Commissioner, and local authorities.</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25 h-100">
+                        <div class="fw-bold text-white mb-1"><i data-lucide="user-check" class="me-1 text-info"></i>4. User Responsibilities</div>
+                        <div>Citizens and emergency responders are expected to report emergency incidents accurately and refrain from transmitting false SOS alerts or misleading hazard reports.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if USER_ROLE == 'ADMIN' or user_role == 'ADMIN' or user.profile.role == 'ADMIN' or user.is_superuser or user.is_staff %}
+<!-- Data Source Status Telemetry -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="rudram-card">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h6 class="fw-bold mb-0">External APIs &amp; Data Source Status</h6>
+                    <div class="small text-secondary">Live connections, calibrated demo simulation layers, and API response latencies.</div>
+                </div>
+                <button class="btn btn-sm btn-outline-info" onclick="window.location.reload()"><i data-lucide="refresh-cw" class="me-1" style="width: 14px; height: 14px;"></i>Ping Sources</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-river-status table-hover small mb-0">
+                    <thead>
+                        <tr class="text-secondary">
+                            <th>Service Name</th>
+                            <th>Category</th>
+                            <th>Connection Status</th>
+                            <th>Live Endpoint URL</th>
+                            <th>Response Latency</th>
+                            <th>Last Telemetry Check</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for src in data_sources %}
+                        <tr>
+                            <td><strong class="river-name">{{ src.display_name }}</strong></td>
+                            <td><span class="badge bg-secondary">{{ src.category }}</span></td>
+                            <td>
+                                {% if src.status == 'CONNECTED' %}
+                                <span class="badge badge-live">CONNECTED (LIVE)</span>
+                                {% elif src.status == 'DEMO' %}
+                                <span class="badge badge-demo">DEMO SIMULATION</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">{{ src.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted small font-monospace">{{ src.endpoint_url|default:"Local Engine" }}</td>
+                            <td>
+                                {% if src.response_time_ms > 0 %}
+                                <span class="text-info fw-bold">{{ src.response_time_ms }} ms</span>
+                                {% else %}
+                                <span class="text-muted">Simulated</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-secondary">{{ src.last_updated|timesince }} ago</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-secondary text-center py-3">No sources registered.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function switchRudramTheme(mode) {
+    localStorage.setItem('rudram_theme', mode);
+    document.documentElement.setAttribute('data-theme', mode);
+    document.documentElement.setAttribute('data-bs-theme', mode);
+    if (window.updateRudramThemeToggle) window.updateRudramThemeToggle();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const currentTheme = localStorage.getItem('rudram_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    document.documentElement.setAttribute('data-bs-theme', currentTheme);
+
+    if (currentTheme === 'light') {
+        const rLight = document.getElementById('themeRadioLight');
+        if (rLight) rLight.checked = true;
+    } else {
+        const rDark = document.getElementById('themeRadioDark');
+        if (rDark) rDark.checked = true;
+    }
+});
+</script>
+{% endblock %}

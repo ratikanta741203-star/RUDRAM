@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM - AI Emergency Assistant Copilot{% endblock %}
+{% block meta_description %}Get AI-assisted guidance for disaster risks, evacuation routes, shelter availability, and emergency operations.{% endblock %}
+{% block page_heading %}AI Incident Command Copilot & Situation Synthesizer{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Interactive Copilot Chat Window -->
+    <div class="col-lg-7">
+        <div class="rudram-card d-flex flex-column" style="height: 650px;">
+            <div class="d-flex align-items-center justify-content-between pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="p-2 bg-info bg-opacity-25 text-info rounded-circle">
+                        <i data-lucide="bot" style="width: 20px; height: 20px;"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0 text-white">RUDRAM Operational Intelligence Copilot</h6>
+                        <div class="small text-secondary">Domain Hydrological Rules Engine & Multi-Hazard Assistant</div>
+                    </div>
+                </div>
+                <span class="badge badge-demo">RULE-BASED DEMO ASSISTANT</span>
+            </div>
+
+            <!-- Messages Log -->
+            <div class="flex-grow-1 overflow-y-auto p-3 d-flex flex-column gap-3" id="chatMessageStream">
+                <!-- System Greeting -->
+                <div class="d-flex align-items-start gap-2">
+                    <div class="p-1 bg-info text-dark rounded-circle" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="bot" style="width: 16px; height: 16px;"></i>
+                    </div>
+                    <div class="p-3 bg-dark bg-opacity-75 border border-secondary border-opacity-25 rounded-3 text-light small" style="max-width: 85%;">
+                        <strong class="text-info d-block mb-1">RUDRAM Intelligence Copilot:</strong>
+                        Situation assessment active for <strong>Bhubaneswar Catchment (Khordha District, Odisha)</strong>. Flood risk calculated at <strong class="text-danger">84% (CRITICAL)</strong> with 186.4mm precipitation. What operational guidance or logistical telemetry do you require?
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Quick Prompt Pills -->
+            <div class="px-3 pt-2 d-flex flex-wrap gap-1 border-top border-secondary border-opacity-25">
+                <button class="btn btn-sm btn-outline-secondary py-0 small text-secondary" onclick="sendQuickPrompt('Where is the nearest high ground shelter?')">Shelter Guidance</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 small text-secondary" onclick="sendQuickPrompt('Which evacuation roads are flooded?')">Unflooded Route</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 small text-secondary" onclick="sendQuickPrompt('What is the NDRF rescue team status?')">Rescue Taskforces</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 small text-secondary" onclick="sendQuickPrompt('What is the 24h rainfall forecast?')">Precipitation Telemetry</button>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="p-3 border-top border-secondary border-opacity-25">
+                <form id="copilotForm" class="d-flex gap-2">
+                    <input type="text" id="userInput" class="form-control bg-dark border-secondary text-light" placeholder="Ask anything about risks, safe routes, shelter beds, water levels..." autocomplete="off">
+                    <button type="submit" class="btn btn-primary px-3" id="btnSendChat">
+                        <i data-lucide="send" style="width: 16px; height: 16px;"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active AI Incident Directives & Synthesis Panel -->
+    <div class="col-lg-5">
+        <div class="rudram-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom border-secondary border-opacity-25 pb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i data-lucide="sparkles" class="text-warning" style="width: 18px; height: 18px;"></i>
+                    <h6 class="fw-bold mb-0">Automated Situation Synthesis</h6>
+                </div>
+                <button class="btn btn-sm btn-outline-info py-0" onclick="refreshSynthesis()">Re-Analyze Situation</button>
+            </div>
+
+            <div class="alert alert-danger border-danger border-opacity-50 small p-3 mb-3">
+                <div class="fw-bold mb-1"><i data-lucide="alert-triangle" class="me-1" style="width: 14px; height: 14px;"></i>CRITICAL FLOOD EMERGENCY DETECTED</div>
+                <div>Risk score is <strong>84%</strong> in Bhubaneswar. Multi-catchment backflow imminent from Daya/Kuakhai riverbed.</div>
+            </div>
+
+            <h6 class="fw-bold small text-uppercase text-secondary mb-2">Priority Action Checklist</h6>
+            <div class="d-flex flex-column gap-2 mb-3" id="actionDirectivesContainer">
+                <div class="p-2 bg-dark bg-opacity-50 border border-secondary border-opacity-25 rounded small">
+                    <div class="d-flex justify-content-between text-danger fw-bold mb-1">
+                        <span>1. Issue Emergency Siren Broadcast</span>
+                        <span class="badge bg-danger">P0 Immediate</span>
+                    </div>
+                    <div class="text-secondary">Execute CAP geo-fenced siren alert for Rasulgarh & Daya riverine settlements.</div>
+                </div>
+                <div class="p-2 bg-dark bg-opacity-50 border border-secondary border-opacity-25 rounded small">
+                    <div class="d-flex justify-content-between text-danger fw-bold mb-1">
+                        <span>2. Evacuate 18,400 Exposed Residents</span>
+                        <span class="badge bg-danger">P0 Immediate</span>
+                    </div>
+                    <div class="text-secondary">Designate BJB College High-Ground Shelter (32m elevation) as primary staging center.</div>
+                </div>
+                <div class="p-2 bg-dark bg-opacity-50 border border-secondary border-opacity-25 rounded small">
+                    <div class="d-flex justify-content-between text-warning fw-bold mb-1">
+                        <span>3. Route Transit via Janpath Bypass</span>
+                        <span class="badge bg-warning text-dark">P1 30 Mins</span>
+                    </div>
+                    <div class="text-secondary">Barricade Daya River Road (0.8m submerged); deploy police marshals to Janpath Ridge.</div>
+                </div>
+                <div class="p-2 bg-dark bg-opacity-50 border border-secondary border-opacity-25 rounded small">
+                    <div class="d-flex justify-content-between text-info fw-bold mb-1">
+                        <span>4. Deploy ODRAF Unit 1 Motor Boats</span>
+                        <span class="badge bg-info text-dark">P1 45 Mins</span>
+                    </div>
+                    <div class="text-secondary">Stage 4 inflatable rescue boats at Sundarpada low-water crossing.</div>
+                </div>
+            </div>
+
+            <div class="p-2 bg-black bg-opacity-30 rounded border border-secondary border-opacity-25 small text-secondary">
+                <strong>Scientific Honesty Note:</strong> Copilot operates on transparent, validated emergency hydrological rules when external cloud LLM tokens are unconfigured.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function sendQuickPrompt(txt) {
+    document.getElementById('userInput').value = txt;
+    document.getElementById('copilotForm').dispatchEvent(new Event('submit'));
+}
+
+document.getElementById('copilotForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('userInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    const stream = document.getElementById('chatMessageStream');
+    
+    // Append User Bubble
+    const userBubble = document.createElement('div');
+    userBubble.className = 'd-flex align-items-start gap-2 justify-content-end';
+    userBubble.innerHTML = `
+        <div class="p-3 bg-primary text-white rounded-3 small" style="max-width: 80%;">
+            ${msg}
+        </div>
+    `;
+    stream.appendChild(userBubble);
+    input.value = '';
+    stream.scrollTop = stream.scrollHeight;
+
+    // Loading indicator
+    const loadBubble = document.createElement('div');
+    loadBubble.className = 'd-flex align-items-start gap-2';
+    loadBubble.innerHTML = `
+        <div class="p-1 bg-info text-dark rounded-circle" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="bot" style="width: 16px; height: 16px;"></i>
+        </div>
+        <div class="p-2 bg-dark bg-opacity-75 rounded-3 text-secondary small">
+            <span class="spinner-grow spinner-grow-sm me-1"></span> Analyzing hydrological domain rules...
+        </div>
+    `;
+    stream.appendChild(loadBubble);
+    lucide.createIcons();
+    stream.scrollTop = stream.scrollHeight;
+
+    try {
+        const res = await fetch('/api/assistant/chat/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg })
+        });
+        const data = await res.json();
+        loadBubble.remove();
+
+        const formattedReply = data.reply
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="btn btn-xs btn-outline-info text-info py-0 px-2 my-1 text-decoration-none" style="font-size: 0.75rem;">$1</a>')
+            .replace(/\n/g, '<br>');
+
+        const timeStr = data.data_timestamp ? `<span class="ms-2 text-secondary">| Updated: ${data.data_timestamp}</span>` : '';
+
+        const botBubble = document.createElement('div');
+        botBubble.className = 'd-flex align-items-start gap-2';
+        botBubble.innerHTML = `
+            <div class="p-1 bg-info text-dark rounded-circle" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="bot" style="width: 16px; height: 16px;"></i>
+            </div>
+            <div class="p-3 bg-dark bg-opacity-75 border border-secondary border-opacity-25 rounded-3 text-light small" style="max-width: 85%;">
+                <strong class="text-info d-block mb-1">RUDRAM Intelligence Copilot:</strong>
+                <div class="mb-2">${formattedReply}</div>
+                <div class="mt-2 pt-1 border-top border-secondary border-opacity-25 text-muted d-flex align-items-center flex-wrap gap-1" style="font-size: 0.7rem;">
+                    <i data-lucide="database" style="width: 12px; height: 12px;"></i>
+                    <span>Source: <strong>${data.source}</strong></span>
+                    ${timeStr}
+                </div>
+            </div>
+        `;
+        stream.appendChild(botBubble);
+        lucide.createIcons();
+        stream.scrollTop = stream.scrollHeight;
+    } catch (e) {
+        loadBubble.remove();
+        showToast('Error communicating with assistant engine', 'error');
+    }
+});
+
+async function refreshSynthesis() {
+    showToast('Synthesizing latest telemetry into tactical action items...', 'info');
+    try {
+        const res = await fetch('/api/assistant/analyze/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ risk_score: 91, rainfall_mm: 215.0, exposed_population: 21400 })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('AI Directives refreshed!', 'success');
+        }
+    } catch (e) {}
+}
+</script>
+{% endblock %}

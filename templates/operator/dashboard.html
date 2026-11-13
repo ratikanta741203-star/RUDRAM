@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM - Emergency Operator Control Room & Dispatch Center{% endblock %}
+
+{% block meta_description %}Coordinate field dispatches, resource requests, shelter updates, and emergency operations from the RUDRAM operator desk.{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3 operator-control-room">
+
+    <!-- Operator Header Banner -->
+    <div class="card border-0 bg-info bg-opacity-10 border-info border-opacity-25 rounded-3 shadow-sm mb-4">
+        <div class="card-body p-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-info text-dark font-monospace fw-bold px-2 py-1" style="font-size: 0.75rem;">EMERGENCY OPERATOR CONTROL ROOM</span>
+                    <span class="badge bg-success text-white font-monospace px-2 py-1" style="font-size: 0.75rem;"><i data-lucide="radio" style="width: 12px; height: 12px;" class="me-1"></i>OPERATIONAL DISPATCH ACTIVE</span>
+                </div>
+                <h3 class="fw-bold mb-1 text-white">RUDRAM Emergency Operations & Dispatch Control</h3>
+                <p class="mb-0 text-secondary small">Submit resource dispatch requests, monitor deployed field teams, and track Admin approval workflows in real time.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{% url 'resources' %}" class="btn btn-outline-info btn-sm fw-semibold">
+                    <i data-lucide="box" style="width: 14px; height: 14px;" class="me-1"></i> Resource Inventory
+                </a>
+                <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm fw-bold px-3">
+                    <i data-lucide="log-out" style="width: 14px; height: 14px;" class="me-1"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Django Flash Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+                <strong>Notification:</strong> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Operator Quick Stats Banner -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="rudram-card stat-widget">
+                <div>
+                    <div class="stat-label">Total Resources Available</div>
+                    <div class="stat-value text-info">{{ resources.count }}</div>
+                </div>
+                <i data-lucide="package" class="text-info opacity-50" style="width: 32px; height: 32px;"></i>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="rudram-card stat-widget">
+                <div>
+                    <div class="stat-label">Deployed Rescue Teams</div>
+                    <div class="stat-value text-success">{{ rescue_teams.count }}</div>
+                </div>
+                <i data-lucide="users" class="text-success opacity-50" style="width: 32px; height: 32px;"></i>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="rudram-card stat-widget">
+                <div>
+                    <div class="stat-label">My Pending Requests</div>
+                    <div class="stat-value text-warning">{{ pending_requests_count }}</div>
+                </div>
+                <i data-lucide="clock" class="text-warning opacity-50" style="width: 32px; height: 32px;"></i>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="rudram-card stat-widget">
+                <div>
+                    <div class="stat-label">Approved Dispatches</div>
+                    <div class="stat-value text-primary">{{ approved_requests_count }}</div>
+                </div>
+                <i data-lucide="check-circle" class="text-primary opacity-50" style="width: 32px; height: 32px;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Operator Navigation Tabs -->
+    <ul class="nav nav-pills nav-fill bg-dark border border-secondary border-opacity-25 rounded-3 p-1 shadow-sm mb-4" id="operatorTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold py-2 text-white" id="tab-dispatch" data-bs-toggle="tab" data-bs-target="#sec-dispatch" type="button" role="tab">
+                <i data-lucide="send" style="width: 16px; height: 16px;" class="me-1 text-info"></i> Resource Dispatch Operations
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold py-2 text-white" id="tab-my-requests" data-bs-toggle="tab" data-bs-target="#sec-my-requests" type="button" role="tab">
+                <i data-lucide="list-checks" style="width: 16px; height: 16px;" class="me-1 text-warning"></i> My Approval Requests History
+                {% if pending_requests_count > 0 %}
+                <span class="badge bg-warning text-dark rounded-pill ms-1" style="font-size: 0.7rem;">{{ pending_requests_count }}</span>
+                {% endif %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold py-2 text-white" id="tab-shelters" data-bs-toggle="tab" data-bs-target="#sec-shelters" type="button" role="tab">
+                <i data-lucide="home" style="width: 16px; height: 16px;" class="me-1 text-success"></i> Active Shelters Directory
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="operatorTabContent">
+
+        <!-- TAB 1: Resource Dispatch Operations -->
+        <div class="tab-pane fade show active" id="sec-dispatch" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="rudram-card">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h6 class="fw-bold text-white mb-0"><i data-lucide="box" class="me-2 text-info" style="width: 18px; height: 18px;"></i>Emergency Stockpile Inventory</h6>
+                            <span class="badge bg-info bg-opacity-25 text-info">Request Dispatch for Admin Approval</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover align-middle mb-0 small">
+                                <thead class="table-dark text-secondary border-secondary">
+                                    <tr>
+                                        <th>Resource Name</th>
+                                        <th>Category</th>
+                                        <th>Available</th>
+                                        <th>Warehouse</th>
+                                        <th class="text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for r in resources %}
+                                    <tr>
+                                        <td><strong class="text-white">{{ r.name }}</strong></td>
+                                        <td><span class="badge bg-secondary">{{ r.category }}</span></td>
+                                        <td><span class="text-success fw-bold">{{ r.quantity_available }}</span> {{ r.unit }}</td>
+                                        <td class="text-muted">{{ r.warehouse_location }}</td>
+                                        <td class="text-end">
+                                            <button type="button" class="btn btn-sm btn-outline-info py-1 px-2" onclick="openOperatorDispatchModal({{ r.id }}, '{{ r.name|escapejs }}', {{ r.quantity_available }}, '{{ r.unit|escapejs }}')">
+                                                <i data-lucide="send" style="width: 12px; height: 12px;" class="me-1"></i>Request Dispatch
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">No resources registered in inventory.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="rudram-card">
+                        <h6 class="fw-bold text-white mb-3"><i data-lucide="shield-alert" class="me-2 text-warning" style="width: 18px; height: 18px;"></i>Operator RBAC Rules</h6>
+                        <div class="small text-secondary mb-3">
+                            <p class="mb-2"><i data-lucide="check" class="text-success me-1" style="width: 14px; height: 14px;"></i><strong>Operational Dispatch:</strong> Operators can request resource allocations. Submissions enter Admin approval queue.</p>
+                            <p class="mb-2"><i data-lucide="check" class="text-success me-1" style="width: 14px; height: 14px;"></i><strong>Shelter Monitoring:</strong> Operators can view open shelters and update evacuee headcount.</p>
+                            <p class="mb-0"><i data-lucide="lock" class="text-danger me-1" style="width: 14px; height: 14px;"></i><strong>Protected Functions:</strong> Admin CRUD, user permissions, and direct stock deletions are restricted to Admin Commanders.</p>
+                        </div>
+                        <div class="alert alert-info py-2 px-3 small mb-0">
+                            <strong>Note:</strong> All operator dispatch requests are logged in the immutable audit trail for governance compliance.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: My Approval Requests History -->
+        <div class="tab-pane fade" id="sec-my-requests" role="tabpanel">
+            <div class="rudram-card">
+                <h6 class="fw-bold text-white mb-3"><i data-lucide="clock" class="me-2 text-warning" style="width: 18px; height: 18px;"></i>My Submitted Approval Requests Status</h6>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0 small">
+                        <thead class="table-dark text-secondary border-secondary">
+                            <tr>
+                                <th>Request ID</th>
+                                <th>Type</th>
+                                <th>Item / Target</th>
+                                <th>Requested Changes</th>
+                                <th>Reason / Notes</th>
+                                <th>Status</th>
+                                <th>Submitted At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in operator_requests %}
+                            <tr>
+                                <td class="font-monospace text-info">#REQ-{{ req.id }}</td>
+                                <td><span class="badge bg-secondary">{{ req.request_type }}</span></td>
+                                <td><strong class="text-white">{{ req.target_object_name }}</strong></td>
+                                <td><code class="text-light">{{ req.requested_changes }}</code></td>
+                                <td class="text-secondary">{{ req.reason|default:"--" }}</td>
+                                <td>
+                                    {% if req.status == 'PENDING' %}
+                                        <span class="badge bg-warning text-dark"><i data-lucide="clock" style="width: 11px; height: 11px;" class="me-1"></i>PENDING ADMIN APPROVAL</span>
+                                    {% elif req.status == 'APPROVED' %}
+                                        <span class="badge bg-success"><i data-lucide="check-circle" style="width: 11px; height: 11px;" class="me-1"></i>APPROVED</span>
+                                    {% else %}
+                                        <span class="badge bg-danger"><i data-lucide="x-circle" style="width: 11px; height: 11px;" class="me-1"></i>REJECTED</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-muted small">{{ req.created_at|date:"M d, H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">No approval requests submitted yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: Active Shelters Directory -->
+        <div class="tab-pane fade" id="sec-shelters" role="tabpanel">
+            <div class="rudram-card">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="fw-bold text-white mb-0"><i data-lucide="home" class="me-2 text-success" style="width: 18px; height: 18px;"></i>Emergency Shelter Directory & Headcount</h6>
+                    <a href="{% url 'shelters' %}" class="btn btn-sm btn-outline-info">View Public Directory</a>
+                </div>
+                <div class="row g-3">
+                    {% for s in shelters %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="p-3 bg-dark bg-opacity-50 border border-secondary border-opacity-25 rounded h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <strong class="text-white">{{ s.name }}</strong>
+                                    <span class="badge bg-{% if s.status == 'OPEN' %}success{% elif s.status == 'NEAR_CAPACITY' %}warning text-dark{% else %}danger{% endif %}">{{ s.status }}</span>
+                                </div>
+                                <div class="small text-secondary mb-2">{{ s.address }}</div>
+                                <div class="small text-muted font-monospace">Occupancy: {{ s.current_occupancy }} / {{ s.total_capacity }} beds</div>
+                            </div>
+                            <div class="mt-3 pt-2 border-top border-secondary border-opacity-25 text-end">
+                                <a href="{% url 'shelters' %}" class="btn btn-sm btn-outline-secondary py-0 px-2">Update Headcount</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center text-muted py-4">No active shelters.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Operator Dispatch Request Modal -->
+<div class="modal fade" id="operatorDispatchModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-info">
+            <form action="{% url 'resource_dispatch' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="resource_id" id="modalOperatorResId">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title fs-6 fw-bold"><i data-lucide="send" class="me-2 text-info" style="width: 18px; height: 18px;"></i>Request Resource Dispatch (Admin Approval Required)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body row g-3 text-start">
+                    <div class="col-md-12">
+                        <label class="form-label small fw-semibold">Resource Item</label>
+                        <input type="text" id="modalOperatorResName" class="form-control form-control-sm bg-secondary bg-opacity-25 text-light" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Available Stock</label>
+                        <input type="text" id="modalOperatorResAvail" class="form-control form-control-sm bg-secondary bg-opacity-25 text-light" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Quantity to Dispatch</label>
+                        <input type="number" name="quantity" class="form-control form-control-sm" min="1" value="10" required>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label small fw-semibold">Destination Field Zone</label>
+                        <input type="text" name="destination_zone" class="form-control form-control-sm" placeholder="e.g. Rasulgarh Flood Relief Staging Base" required>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label small fw-semibold">Reason / Operational Notes</label>
+                        <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Describe operational necessity for this dispatch..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-info fw-bold"><i data-lucide="send" class="me-1" style="width: 14px; height: 14px;"></i>Submit Request for Admin Approval</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openOperatorDispatchModal(id, name, avail, unit) {
+    document.getElementById('modalOperatorResId').value = id;
+    document.getElementById('modalOperatorResName').value = name;
+    document.getElementById('modalOperatorResAvail').value = avail + ' ' + unit;
+    const modal = new bootstrap.Modal(document.getElementById('operatorDispatchModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

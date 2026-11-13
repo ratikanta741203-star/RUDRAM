@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM - Active Disaster Monitor & Knowledge{% endblock %}
+{% block meta_description %}Track active floods, cyclones, earthquakes, and other hazards with RUDRAM disaster monitoring and response guidance.{% endblock %}
+{% block page_heading %}Active Disaster Events & Multi-Hazard Incidents{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-12">
+        <div class="d-flex align-items-center justify-content-end mb-3">
+            <a href="{% url 'map' %}" class="btn btn-sm btn-outline-info">Open GIS Live Map</a>
+        </div>
+
+        <!-- Live Disaster Monitor Cards (FLOOD, CYCLONE, EARTHQUAKE) -->
+        <div class="row g-3 mb-4">
+            <!-- FLOOD CARD -->
+            <div class="col-md-4">
+                <div class="rudram-card h-100 border border-primary border-opacity-50" style="cursor: pointer;" onclick="openDisasterRiskModal('flood')" role="button" tabindex="0">
+                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                        <div class="d-flex align-items-center gap-2">
+                            <i data-lucide="waves" class="text-primary" style="width: 20px; height: 20px;"></i>
+                            <h6 class="fw-bold text-white mb-0">FLOOD</h6>
+                        </div>
+                        {% if flood_summary.available %}
+                        <span class="badge bg-success">LIVE</span>
+                        {% else %}
+                        <span class="badge bg-danger">UNAVAILABLE</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="text-secondary small">Flood Risk &bull; <span class="text-primary">Click for details</span></div>
+                        {% if flood_summary.available %}
+                        <div class="display-6 fw-bold text-primary mb-0">{{ flood_summary.risk_percentage }}%</div>
+                        {% else %}
+                        <div class="fs-5 fw-bold text-muted mb-0">Live data unavailable</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="p-2 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25 mb-2 small">
+                        <div class="d-flex justify-content-between text-muted">
+                            <span>High-Risk Places:</span>
+                            {% if flood_summary.available %}
+                            <strong class="text-warning">{{ flood_summary.high_risk_places }}</strong>
+                            {% else %}
+                            <strong class="text-muted">Data unavailable</strong>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex justify-content-between text-muted mt-1">
+                            <span>Monitored Grid:</span>
+                            <span class="text-white">{{ flood_summary.total_monitored|default:"30" }} Districts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CYCLONE CARD -->
+            <div class="col-md-4">
+                <div class="rudram-card h-100 border border-warning border-opacity-50" style="cursor: pointer;" onclick="openDisasterRiskModal('cyclone')" role="button" tabindex="0">
+                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                        <div class="d-flex align-items-center gap-2">
+                            <i data-lucide="wind" class="text-warning" style="width: 20px; height: 20px;"></i>
+                            <h6 class="fw-bold text-white mb-0">CYCLONE</h6>
+                        </div>
+                        {% if cyclone_summary.available %}
+                        <span class="badge bg-success">LIVE</span>
+                        {% else %}
+                        <span class="badge bg-danger">UNAVAILABLE</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="text-secondary small">Cyclone Risk &bull; <span class="text-warning">Click for details</span></div>
+                        {% if cyclone_summary.available %}
+                        <div class="display-6 fw-bold text-warning mb-0">{{ cyclone_summary.risk_percentage }}%</div>
+                        {% else %}
+                        <div class="fs-5 fw-bold text-muted mb-0">Live data unavailable</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="p-2 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25 mb-2 small">
+                        <div class="d-flex justify-content-between text-muted">
+                            <span>High-Risk Places:</span>
+                            {% if cyclone_summary.available %}
+                            <strong class="text-warning">{{ cyclone_summary.high_risk_places }}</strong>
+                            {% else %}
+                            <strong class="text-muted">Data unavailable</strong>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex justify-content-between text-muted mt-1">
+                            <span>Monitored Grid:</span>
+                            <span class="text-white">{{ cyclone_summary.total_monitored|default:"30" }} Districts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EARTHQUAKE CARD -->
+            <div class="col-md-4">
+                <div class="rudram-card h-100 border border-secondary border-opacity-50" style="cursor: pointer;" onclick="openDisasterRiskModal('earthquake')" role="button" tabindex="0">
+                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                        <div class="d-flex align-items-center gap-2">
+                            <i data-lucide="activity" class="text-secondary" style="width: 20px; height: 20px;"></i>
+                            <h6 class="fw-bold text-white mb-0">EARTHQUAKE</h6>
+                        </div>
+                        <span class="badge bg-secondary">DATA UNAVAILABLE</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="text-secondary small">Earthquake Risk &bull; <span class="text-secondary">Click for status</span></div>
+                        <div class="display-6 fw-bold text-secondary mb-0">--</div>
+                    </div>
+
+                    <div class="p-2 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25 mb-2 small">
+                        <div class="d-flex justify-content-between text-muted">
+                            <span>High-Risk Places:</span>
+                            <strong class="text-muted">Data unavailable</strong>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted mt-1">
+                            <span>Source Status:</span>
+                            <span class="text-secondary">No live earthquake source configured</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DISASTER KNOWLEDGE & PREPAREDNESS SECTION -->
+        <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h5 class="fw-bold text-white mb-1"><i data-lucide="book-open" class="text-info me-2" style="width: 22px; height: 22px;"></i>DISASTER KNOWLEDGE &amp; PREPAREDNESS</h5>
+                    <div class="text-secondary small">Learn from Odisha's disaster history and stay prepared with official safety guidelines.</div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <!-- FLOOD KNOWLEDGE CARD -->
+                <div class="col-md-4">
+                    <div class="rudram-card h-100 d-flex flex-column border border-secondary border-opacity-25">
+                        <div class="position-relative mb-3 rounded overflow-hidden" style="height: 160px; background-color: #111;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/2008_Orissa_floods_relief_work.jpg/800px-2008_Orissa_floods_relief_work.jpg" alt="Odisha Flood Relief Photography" class="w-100 h-100 object-fit-cover" loading="lazy">
+                            <span class="position-absolute top-0 end-0 bg-dark bg-opacity-75 text-white px-2 py-1 small rounded-bottom-start border-start border-bottom border-secondary border-opacity-25">Historical Image</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50">HISTORICAL &amp; SAFETY</span>
+                        </div>
+                        <h6 class="fw-bold text-white mb-2">FLOOD HISTORY &amp; SAFETY</h6>
+                        <p class="small text-secondary mb-3 flex-grow-1">Learn from Odisha's major river basin inundation events, embankment breach dynamics, and life-saving flood safety protocols.</p>
+
+                        <div class="pt-2 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                            <span class="small text-muted" style="font-size: 0.72rem;">Source: OSDMA / IAF Relief Archive</span>
+                            <button class="btn btn-sm btn-outline-primary" onclick="openKnowledgeModal('flood')">Learn More &rarr;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CYCLONE KNOWLEDGE CARD -->
+                <div class="col-md-4">
+                    <div class="rudram-card h-100 d-flex flex-column border border-secondary border-opacity-25">
+                        <div class="position-relative mb-3 rounded overflow-hidden" style="height: 160px; background-color: #111;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Cyclone_Fani_2019-05-02_0730Z.jpg/800px-Cyclone_Fani_2019-05-02_0730Z.jpg" alt="Cyclone Fani Imagery" class="w-100 h-100 object-fit-cover" loading="lazy">
+                            <span class="position-absolute top-0 end-0 bg-dark bg-opacity-75 text-white px-2 py-1 small rounded-bottom-start border-start border-bottom border-secondary border-opacity-25">Historical Image</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50">HISTORICAL &amp; SAFETY</span>
+                        </div>
+                        <h6 class="fw-bold text-white mb-2">CYCLONE HISTORY &amp; SAFETY</h6>
+                        <p class="small text-secondary mb-3 flex-grow-1">Verified records of landmark Bay of Bengal cyclones (1999 Super Cyclone, Phailin, Fani, Yaas, Dana) and coastal evacuation safety rules.</p>
+
+                        <div class="pt-2 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                            <span class="small text-muted" style="font-size: 0.72rem;">Source: IMD / SRC Odisha</span>
+                            <button class="btn btn-sm btn-outline-warning" onclick="openKnowledgeModal('cyclone')">Learn More &rarr;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EARTHQUAKE KNOWLEDGE CARD -->
+                <div class="col-md-4">
+                    <div class="rudram-card h-100 d-flex flex-column border border-secondary border-opacity-25">
+                        <div class="position-relative mb-3 rounded overflow-hidden" style="height: 160px; background-color: #111;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Bhuj_earthquake_2001.jpg/800px-Bhuj_earthquake_2001.jpg" alt="Bhuj Historical Earthquake Photography" class="w-100 h-100 object-fit-cover" loading="lazy">
+                            <span class="position-absolute top-0 end-0 bg-dark bg-opacity-75 text-white px-2 py-1 small rounded-bottom-start border-start border-bottom border-secondary border-opacity-25">Historical Image</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary border-opacity-50">HISTORICAL &amp; SAFETY</span>
+                        </div>
+                        <h6 class="fw-bold text-white mb-2">EARTHQUAKE HISTORY &amp; SAFETY</h6>
+                        <p class="small text-secondary mb-3 flex-grow-1">Seismic fault line principles, Indian subcontinent historical quakes, and the DROP, COVER, HOLD ON life-saving procedure.</p>
+
+                        <div class="pt-2 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                            <span class="small text-muted" style="font-size: 0.72rem;">Source: NDMA / GSI Archive</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="openKnowledgeModal('earthquake')">Learn More &rarr;</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Live Risk Locations Modal -->
+<div class="modal fade" id="disasterRiskModal" tabindex="-1" aria-labelledby="disasterRiskModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark text-light border border-secondary border-opacity-50 shadow-lg">
+            <div class="modal-header border-bottom border-secondary border-opacity-25">
+                <h5 class="modal-title fw-bold text-white" id="disasterRiskModalTitle">Risk Locations</h5>
+                <button type="button" class="btn-close btn-close-white" onclick="closeDisasterRiskModal()"></button>
+            </div>
+            <div class="modal-body py-3" id="disasterRiskModalBody">
+                <!-- Location Items Rendered Here -->
+            </div>
+            <div class="modal-footer border-top border-secondary border-opacity-25 py-2">
+                <button type="button" class="btn btn-sm btn-secondary" onclick="closeDisasterRiskModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Educational Disaster Knowledge Modal -->
+<div class="modal fade" id="disasterKnowledgeModal" tabindex="-1" aria-labelledby="disasterKnowledgeModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-dark text-light border border-secondary border-opacity-50 shadow-lg">
+            <div class="modal-header border-bottom border-secondary border-opacity-25">
+                <h5 class="modal-title fw-bold text-white" id="disasterKnowledgeModalTitle">Disaster Knowledge &amp; Safety</h5>
+                <button type="button" class="btn-close btn-close-white" onclick="closeDisasterKnowledgeModal()"></button>
+            </div>
+            <div class="modal-body py-3" id="disasterKnowledgeModalBody">
+                <!-- Educational Content Rendered Dynamically -->
+            </div>
+            <div class="modal-footer border-top border-secondary border-opacity-25 py-2">
+                <button type="button" class="btn btn-sm btn-secondary" onclick="closeDisasterKnowledgeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const floodLocs = {{ flood_locations_json|safe|default:"[]" }};
+const cycloneLocs = {{ cyclone_locations_json|safe|default:"[]" }};
+const knowledgeDataset = {{ knowledge_data_json|safe|default:"{}" }};
+
+let riskModalInstance = null;
+let knowledgeModalInstance = null;
+
+function getRiskModalInstance() {
+    const el = document.getElementById('disasterRiskModal');
+    if (!el) return null;
+    if (!riskModalInstance && window.bootstrap && window.bootstrap.Modal) {
+        riskModalInstance = new bootstrap.Modal(el);
+    }
+    return riskModalInstance;
+}
+
+function getKnowledgeModalInstance() {
+    const el = document.getElementById('disasterKnowledgeModal');
+    if (!el) return null;
+    if (!knowledgeModalInstance && window.bootstrap && window.bootstrap.Modal) {
+        knowledgeModalInstance = new bootstrap.Modal(el);
+    }
+    return knowledgeModalInstance;
+}
+
+function openDisasterRiskModal(type) {
+    const titleEl = document.getElementById('disasterRiskModalTitle');
+    const bodyEl = document.getElementById('disasterRiskModalBody');
+    if (!titleEl || !bodyEl) return;
+
+    if (type === 'flood') {
+        titleEl.innerText = "🌊 Live Flood Risk Locations";
+        if (!floodLocs || floodLocs.length === 0) {
+            bodyEl.innerHTML = `<div class="p-4 text-center text-muted">Live flood risk data unavailable.</div>`;
+        } else {
+            let html = `<div class="list-group list-group-flush bg-transparent">`;
+            floodLocs.forEach((loc, idx) => {
+                const badgeColor = loc.risk_pct >= 70 ? 'danger' : (loc.risk_pct >= 40 ? 'warning' : 'success');
+                html += `
+                    <div class="list-group-item bg-dark bg-opacity-50 text-light border-secondary border-opacity-25 d-flex align-items-center justify-content-between py-2">
+                        <div>
+                            <div class="fw-bold text-white fs-6">${idx + 1}. ${loc.name} <span class="badge bg-${badgeColor} ms-2">${loc.risk_pct}% Risk</span></div>
+                            <div class="small text-secondary">District: ${loc.district} &bull; Lat: ${loc.lat.toFixed(4)}, Lon: ${loc.lon.toFixed(4)}</div>
+                            <div class="small text-muted mt-1">24h Rain: <strong class="text-primary">${loc.rainfall_24h_mm} mm</strong> &bull; Temp: ${loc.temp_c}°C</div>
+                        </div>
+                        <a href="/map/?lat=${loc.lat}&lon=${loc.lon}&name=${encodeURIComponent(loc.name)}" class="btn btn-sm btn-outline-primary">Zoom Map &rarr;</a>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            bodyEl.innerHTML = html;
+        }
+    } else if (type === 'cyclone') {
+        titleEl.innerText = "🌀 Live Cyclone Risk Locations";
+        if (!cycloneLocs || cycloneLocs.length === 0) {
+            bodyEl.innerHTML = `<div class="p-4 text-center text-muted">Live cyclone risk data unavailable.</div>`;
+        } else {
+            let html = `<div class="list-group list-group-flush bg-transparent">`;
+            cycloneLocs.forEach((loc, idx) => {
+                const badgeColor = loc.risk_pct >= 70 ? 'danger' : (loc.risk_pct >= 40 ? 'warning' : 'success');
+                html += `
+                    <div class="list-group-item bg-dark bg-opacity-50 text-light border-secondary border-opacity-25 d-flex align-items-center justify-content-between py-2">
+                        <div>
+                            <div class="fw-bold text-white fs-6">${idx + 1}. ${loc.name} <span class="badge bg-${badgeColor} ms-2">${loc.risk_pct}% Risk</span></div>
+                            <div class="small text-secondary">District: ${loc.district} &bull; Lat: ${loc.lat.toFixed(4)}, Lon: ${loc.lon.toFixed(4)}</div>
+                            <div class="small text-muted mt-1">Wind Speed: <strong class="text-warning">${loc.wind_speed_kmh} km/h</strong> &bull; Humidity: ${loc.humidity_pct}%</div>
+                        </div>
+                        <a href="/map/?lat=${loc.lat}&lon=${loc.lon}&name=${encodeURIComponent(loc.name)}" class="btn btn-sm btn-outline-warning">Zoom Map &rarr;</a>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            bodyEl.innerHTML = html;
+        }
+    } else if (type === 'earthquake') {
+        titleEl.innerText = "🌋 Live Earthquake Hazard Status";
+        bodyEl.innerHTML = `
+            <div class="p-4 text-center">
+                <i data-lucide="activity" class="text-secondary mb-3" style="width: 40px; height: 40px;"></i>
+                <h6 class="fw-bold text-white">Live Earthquake Data Unavailable</h6>
+                <p class="text-secondary small mb-0">No live earthquake / seismic monitoring source is currently configured in the RUDRAM pipeline.</p>
+            </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+    }
+
+    const modal = getRiskModalInstance();
+    if (modal) modal.show();
+}
+
+function closeDisasterRiskModal() {
+    const modalEl = document.getElementById('disasterRiskModal');
+    if (modalEl) {
+        if (document.activeElement && modalEl.contains(document.activeElement)) {
+            document.activeElement.blur();
+        }
+    }
+    const modal = getRiskModalInstance();
+    if (modal) modal.hide();
+}
+
+function openKnowledgeModal(type) {
+    const titleEl = document.getElementById('disasterKnowledgeModalTitle');
+    const bodyEl = document.getElementById('disasterKnowledgeModalBody');
+    if (!titleEl || !bodyEl || !knowledgeDataset[type]) return;
+
+    const k = knowledgeDataset[type];
+    titleEl.innerText = k.title;
+
+    let html = `
+        <div class="mb-3 text-center">
+            <div class="position-relative rounded overflow-hidden mb-2" style="max-height: 240px; background-color: #111;">
+                <img src="${k.image_url}" alt="${k.title}" class="w-100 h-100 object-fit-cover">
+                <span class="position-absolute top-0 end-0 bg-dark bg-opacity-75 text-white px-2 py-1 small rounded-bottom-start">Historical Image</span>
+            </div>
+            <div class="small text-muted">Source: <strong>${k.image_source}</strong> &bull; Event: ${k.image_year}</div>
+        </div>
+
+        <div class="mb-4">
+            <h6 class="fw-bold text-warning border-bottom border-secondary border-opacity-25 pb-2 mb-3">HISTORICAL DISASTER RECORDS</h6>
+    `;
+
+    k.history.forEach(h => {
+        html += `
+            <div class="p-3 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25 mb-2">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h6 class="fw-bold text-white mb-0">${h.event} (${h.year})</h6>
+                    <span class="badge bg-secondary">${h.region}</span>
+                </div>
+                <p class="small text-secondary mb-2">${h.description}</p>
+                <div class="small text-info"><strong>Key Lesson:</strong> ${h.lesson}</div>
+            </div>
+        `;
+    });
+
+    html += `
+        </div>
+
+        <div>
+            <h6 class="fw-bold text-success border-bottom border-secondary border-opacity-25 pb-2 mb-3">SAFETY &amp; PREPAREDNESS GUIDE</h6>
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <div class="p-3 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25 h-100">
+                        <h6 class="fw-bold text-info mb-2">BEFORE (PREPARE)</h6>
+                        <ul class="small text-secondary ps-3 mb-0">
+                            ${k.safety_guide.before.map(item => `<li class="mb-1">${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-dark bg-opacity-50 rounded border border-danger border-opacity-50 h-100">
+                        <h6 class="fw-bold text-danger mb-2">DURING (RESPOND)</h6>
+                        <ul class="small text-secondary ps-3 mb-0">
+                            ${k.safety_guide.during.map(item => `<li class="mb-1">${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-dark bg-opacity-50 rounded border border-success border-opacity-50 h-100">
+                        <h6 class="fw-bold text-success mb-2">AFTER (RECOVER)</h6>
+                        <ul class="small text-secondary ps-3 mb-0">
+                            ${k.safety_guide.after.map(item => `<li class="mb-1">${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    bodyEl.innerHTML = html;
+    const modal = getKnowledgeModalInstance();
+    if (modal) modal.show();
+}
+
+function closeDisasterKnowledgeModal() {
+    const modalEl = document.getElementById('disasterKnowledgeModal');
+    if (modalEl) {
+        if (document.activeElement && modalEl.contains(document.activeElement)) {
+            document.activeElement.blur();
+        }
+    }
+    const modal = getKnowledgeModalInstance();
+    if (modal) modal.hide();
+}
+</script>
+{% endblock %}

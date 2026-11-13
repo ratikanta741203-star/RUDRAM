@@ -1,0 +1,20 @@
+=================================================================
+RUDRAM PLATFORM — HISTORICAL ML MODEL TRAINING & EVALUATION REPORT
+=================================================================
+
+Generated At: 2026-09-01 19:03:26
+
+1. FLOOD RISK MODEL METRICS (Held-Out Test Set 2023-2025):
+   - XGBoost v2 F1-Score: 0.9513
+   - XGBoost v2 ROC-AUC:  0.9993
+   - XGBoost v2 Recall:   0.9986
+   - Random Forest v2 F1: 0.9366
+
+2. CYCLONE RISK MODEL METRICS (Held-Out Test Set 2023-2025):
+   - XGBoost Regressor MAE: 1.091%
+   - XGBoost Regressor R²:  0.993
+
+3. ACTIVE MODEL REGISTRY STATUS:
+   - Flood Risk Active Model: flood_risk_xgboost.joblib (Status: ACTIVE)
+   - Cyclone Risk Active Model: cyclone_risk_xgboost.joblib (Status: ACTIVE)
+=================================================================

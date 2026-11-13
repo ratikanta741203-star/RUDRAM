@@ -1,0 +1,32 @@
+{
+  "registry_version": "2.0.0",
+  "last_updated": "2026-09-01 19:03:26",
+  "active_models": [
+    {
+      "model_name": "RUDRAM Flood Risk Multi-Disaster Estimator",
+      "version": "v2.0.0-odisha-india",
+      "file_path": "ml/models/flood_risk_xgboost.joblib",
+      "algorithm": "XGBoost Classifier + RF Ensemble",
+      "status": "ACTIVE",
+      "test_f1_score": 0.9513,
+      "test_roc_auc": 0.9993
+    },
+    {
+      "model_name": "RUDRAM Dedicated Tropical Cyclone Risk Predictor",
+      "version": "v2.0.0-north-indian-ocean",
+      "file_path": "ml/models/cyclone_risk_xgboost.joblib",
+      "algorithm": "XGBoost Regressor",
+      "status": "ACTIVE",
+      "test_mae": 1.091,
+      "test_r2": 0.993
+    }
+  ],
+  "archived_models": [
+    {
+      "model_name": "Flood Risk Baseline",
+      "version": "v1.0.0-odisha-statewide",
+      "file_path": "ml/models/flood_risk_random_forest.joblib",
+      "status": "VALIDATED"
+    }
+  ]
+}

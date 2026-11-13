@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM - Shelter Management & Recommendation{% endblock %}
+{% block meta_description %}Find emergency shelters, check capacity and services, and get location-based recommendations from RUDRAM.{% endblock %}
+{% block page_heading %}Emergency Shelters & Relief Camp Logistics{% endblock %}
+
+{% block content %}
+<!-- Quick Stats Banner -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">Total Camp Capacity</div>
+                <div class="stat-value text-white">{{ total_cap|default:"4,500" }}</div>
+            </div>
+            <i data-lucide="home" class="text-secondary opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">Current Occupancy</div>
+                <div class="stat-value text-warning">{{ total_occ|default:"1,360" }}</div>
+            </div>
+            <i data-lucide="users" class="text-warning opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">Available Capacity</div>
+                <div class="stat-value text-success">{{ available_cap|default:"3,140" }}</div>
+            </div>
+            <i data-lucide="user-check" class="text-success opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">Active Open Shelters</div>
+                <div class="stat-value text-info">{{ open_count|default:"4" }}</div>
+            </div>
+            <i data-lucide="door-open" class="text-info opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Recommendation & Finder Bar -->
+<div class="rudram-card mb-4 bg-primary bg-opacity-10 border-primary border-opacity-25">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <h5 class="fw-bold mb-1 text-white"><i data-lucide="sparkles" class="me-2 text-info" style="width: 20px; height: 20px;"></i>Shelter Finder & Proximity Radar</h5>
+            <div class="small text-secondary" id="shelterFinderStatusText">Filter real admin-created shelters within 10 km of your current GPS location.</div>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <button class="btn btn-info fw-bold d-flex align-items-center gap-2 px-3" id="btnNearbyShelters" onclick="findNearbyShelters(this)">
+                <i data-lucide="navigation" style="width: 18px; height: 18px;"></i>
+                NEARBY SHELTERS (10 KM)
+            </button>
+            <button class="btn btn-outline-light btn-sm fw-semibold d-none" id="btnAllShelters" onclick="resetSheltersList()">
+                <i data-lucide="rotate-ccw" class="me-1" style="width: 14px; height: 14px;"></i>
+                All Shelters
+            </button>
+            <button class="btn btn-primary fw-bold d-flex align-items-center gap-2 px-3" onclick="findBestShelter()">
+                <i data-lucide="sparkles" style="width: 18px; height: 18px;"></i>
+                FIND BEST SHELTER
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Shelters Cards Grid -->
+<div class="row g-4" id="sheltersGrid">
+    {% for shelter in shelters %}
+    <div class="col-md-6 col-lg-4 shelter-card-item">
+        <div class="rudram-card h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex align-items-start justify-content-between mb-2">
+                    <h6 class="fw-bold text-white mb-0">{{ shelter.name }}</h6>
+                    <span class="badge bg-{% if shelter.status == 'OPEN' %}success{% elif shelter.status == 'NEAR_CAPACITY' %}warning text-dark{% else %}danger{% endif %}">
+                        {{ shelter.status }}
+                    </span>
+                </div>
+                <div class="small text-secondary mb-3">{{ shelter.address }}</div>
+
+                <!-- Progress Bar -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between small text-secondary mb-1">
+                        <span>Occupancy ({{ shelter.current_occupancy }}/{{ shelter.total_capacity }})</span>
+                        <strong class="text-{% if shelter.occupancy_percentage > 80 %}danger{% else %}info{% endif %}">{{ shelter.occupancy_percentage }}%</strong>
+                    </div>
+                    <div class="progress bg-dark" style="height: 6px;">
+                        <div class="progress-bar bg-{% if shelter.occupancy_percentage > 80 %}danger{% else %}info{% endif %}" style="width: {{ shelter.occupancy_percentage }}%;"></div>
+                    </div>
+                </div>
+
+                <!-- Feature Icons -->
+                <div class="d-flex flex-wrap gap-2 small mb-3">
+                    {% if shelter.has_potable_water %}<span class="badge bg-dark border border-secondary text-info"><i data-lucide="droplet" class="me-1" style="width: 12px; height: 12px;"></i>Water</span>{% endif %}
+                    {% if shelter.has_food_stocks %}<span class="badge bg-dark border border-secondary text-success"><i data-lucide="utensils" class="me-1" style="width: 12px; height: 12px;"></i>Food</span>{% endif %}
+                    {% if shelter.has_medical_station %}<span class="badge bg-dark border border-secondary text-danger"><i data-lucide="cross" class="me-1" style="width: 12px; height: 12px;"></i>Medical ICU</span>{% endif %}
+                    {% if shelter.has_backup_generator %}<span class="badge bg-dark border border-secondary text-warning"><i data-lucide="zap" class="me-1" style="width: 12px; height: 12px;"></i>Generator</span>{% endif %}
+                </div>
+
+                <div class="small text-secondary mb-2">
+                    <div><strong>Elevation:</strong> <span class="text-white">{{ shelter.elevation_m }}m a.s.l.</span></div>
+                    <div><strong>Contact:</strong> <span class="text-white">{{ shelter.contact_person }} ({{ shelter.phone_number }})</span></div>
+                </div>
+            </div>
+
+            <div class="pt-3 border-top border-secondary border-opacity-25 d-flex gap-2">
+                <a href="{% url 'evacuation' %}?shelter_id={{ shelter.id }}" class="btn btn-sm btn-outline-info flex-fill">Route Here</a>
+                <button class="btn btn-sm btn-outline-secondary" onclick="quickUpdateOccupancy({{ shelter.id }}, {{ shelter.current_occupancy }})">Update Headcount</button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal for Best Shelter Recommendation Result -->
+<div class="modal fade" id="bestShelterModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-info">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title d-flex align-items-center gap-2">
+                    <i data-lucide="check-circle" class="text-success" style="width: 20px; height: 20px;"></i>
+                    Top Recommended Safe Shelter
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="bestShelterModalBody">
+                <div class="text-center py-3">
+                    <div class="spinner-border text-info mb-2" role="status"></div>
+                    <div class="small text-secondary">Computing multi-criteria spatial suitability score...</div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <a href="{% url 'evacuation' %}" class="btn btn-primary fw-bold w-100">Navigate Safe Route Now</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function findNearbyShelters(btn) {
+    if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+    }
+
+    const statusText = document.getElementById('shelterFinderStatusText');
+    const originalBtnHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Acquiring GPS...';
+    if (statusText) statusText.innerText = 'Acquiring real current GPS location...';
+
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            // Save to session storage for seamless map integration
+            sessionStorage.setItem('rudram_lat', lat);
+            sessionStorage.setItem('rudram_lon', lon);
+
+            if (statusText) statusText.innerText = `GPS Acquired (Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}). Filtering shelters within 10 km...`;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Filtering 10 km...';
+
+            try {
+                const res = await fetch(`/api/shelters/nearby/?latitude=${lat}&longitude=${lon}&radius=10`);
+                const data = await res.json();
+                
+                const grid = document.getElementById('sheltersGrid');
+                const btnAll = document.getElementById('btnAllShelters');
+                if (btnAll) btnAll.classList.remove('d-none');
+
+                if (res.ok && data.success && Array.isArray(data.shelters) && data.shelters.length > 0) {
+                    let html = '';
+                    data.shelters.forEach(s => {
+                        const totalCap = s.total_capacity || 1000;
+                        const currOcc = s.current_occupancy || 0;
+                        const occPct = totalCap > 0 ? Math.round((currOcc / totalCap) * 100) : 0;
+                        const statusClass = s.status === 'OPEN' ? 'success' : (s.status === 'NEAR_CAPACITY' ? 'warning text-dark' : 'danger');
+                        const occClass = occPct > 80 ? 'danger' : 'info';
+
+                        html += `
+                            <div class="col-md-6 col-lg-4 shelter-card-item">
+                                <div class="rudram-card h-100 d-flex flex-column justify-content-between border-info border-opacity-50">
+                                    <div>
+                                        <div class="d-flex align-items-start justify-content-between mb-2">
+                                            <div>
+                                                <h6 class="fw-bold text-white mb-0">${escapeHtml(s.name)}</h6>
+                                                <span class="badge bg-info text-dark font-monospace mt-1"><i data-lucide="navigation" style="width: 11px; height: 11px;" class="me-1"></i>${s.distance_km} km away</span>
+                                            </div>
+                                            <span class="badge bg-${statusClass}">${s.status}</span>
+                                        </div>
+                                        <div class="small text-secondary mb-3">${escapeHtml(s.address)}</div>
+
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between small text-secondary mb-1">
+                                                <span>Occupancy (${currOcc}/${totalCap})</span>
+                                                <strong class="text-${occClass}">${occPct}%</strong>
+                                            </div>
+                                            <div class="progress bg-dark" style="height: 6px;">
+                                                <div class="progress-bar bg-${occClass}" style="width: ${occPct}%;"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex flex-wrap gap-2 small mb-3">
+                                            ${s.has_potable_water ? '<span class="badge bg-dark border border-secondary text-info"><i data-lucide="droplet" class="me-1" style="width: 12px; height: 12px;"></i>Water</span>' : ''}
+                                            ${s.has_food_stocks ? '<span class="badge bg-dark border border-secondary text-success"><i data-lucide="utensils" class="me-1" style="width: 12px; height: 12px;"></i>Food</span>' : ''}
+                                            ${s.has_medical_station ? '<span class="badge bg-dark border border-secondary text-danger"><i data-lucide="cross" class="me-1" style="width: 12px; height: 12px;"></i>Medical ICU</span>' : ''}
+                                            ${s.has_backup_generator ? '<span class="badge bg-dark border border-secondary text-warning"><i data-lucide="zap" class="me-1" style="width: 12px; height: 12px;"></i>Generator</span>' : ''}
+                                        </div>
+
+                                        <div class="small text-secondary mb-2">
+                                            <div><strong>Elevation:</strong> <span class="text-white">${s.elevation_m}m a.s.l.</span></div>
+                                            <div><strong>Contact:</strong> <span class="text-white">${escapeHtml(s.contact_person)} (${escapeHtml(s.phone_number)})</span></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-3 border-top border-secondary border-opacity-25 d-flex gap-2">
+                                        <a href="/evacuation/?shelter_id=${s.id}" class="btn btn-sm btn-outline-info flex-fill">Route Here</a>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="quickUpdateOccupancy(${s.id}, ${currOcc})">Update Headcount</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    grid.innerHTML = html;
+                    if (statusText) statusText.innerText = `Showing ${data.count} registered shelter(s) within 10 km of your current GPS location.`;
+                    if (window.lucide) lucide.createIcons();
+                } else {
+                    grid.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <div class="rudram-card py-5 border-warning border-opacity-50">
+                                <i data-lucide="map-pin-off" class="text-warning mb-3" style="width: 48px; height: 48px;"></i>
+                                <h5 class="fw-bold text-white mb-2">No registered shelters found within 10 km.</h5>
+                                <div class="small text-secondary mb-3">All registered emergency shelters in the database are located beyond your 10 km radius.</div>
+                                <button class="btn btn-outline-info btn-sm" onclick="resetSheltersList()">View All Emergency Shelters</button>
+                            </div>
+                        </div>
+                    `;
+                    if (statusText) statusText.innerText = 'No registered shelters found within 10 km.';
+                    if (window.lucide) lucide.createIcons();
+                }
+            } catch (err) {
+                console.error('Nearby shelter fetch error:', err);
+                alert('Nearby shelter service is temporarily unavailable.');
+                if (statusText) statusText.innerText = 'Error fetching nearby shelters.';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnHtml;
+                if (window.lucide) lucide.createIcons();
+            }
+        },
+        (error) => {
+            console.warn('Geolocation error:', error);
+            btn.disabled = false;
+            btn.innerHTML = originalBtnHtml;
+            alert('Location access is required to find nearby shelters within 10 km. Please enable GPS/location permissions in your browser.');
+            if (statusText) statusText.innerText = 'Location access is required to find nearby shelters within 10 km.';
+            if (window.lucide) lucide.createIcons();
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
+function resetSheltersList() {
+    window.location.reload();
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function findBestShelter() {
+    const modal = new bootstrap.Modal(document.getElementById('bestShelterModal'));
+    modal.show();
+
+    const lat = sessionStorage.getItem('rudram_lat') || '20.2961';
+    const lon = sessionStorage.getItem('rudram_lon') || '85.8245';
+
+    try {
+        const res = await fetch(`/api/shelters/recommend/?lat=${lat}&lon=${lon}&medical_required=true`);
+        const data = await res.json();
+        if (data.success && data.best_match) {
+            const b = data.best_match;
+            document.getElementById('bestShelterModalBody').innerHTML = `
+                <div class="p-3 bg-primary bg-opacity-10 border border-primary border-opacity-50 rounded mb-3">
+                    <span class="badge bg-success mb-1">SUITABILITY SCORE: ${b.suitability_score}%</span>
+                    <h5 class="fw-bold text-white mb-1">${escapeHtml(b.name)}</h5>
+                    <div class="small text-secondary mb-2">${escapeHtml(b.address)}</div>
+                    <div class="row g-2 small mb-2">
+                        <div class="col-6"><strong>Distance:</strong> <span class="text-info">${b.distance_km} km</span></div>
+                        <div class="col-6"><strong>Free Capacity:</strong> <span class="text-success">${b.available_capacity} beds</span></div>
+                        <div class="col-6"><strong>Elevation:</strong> <span class="text-warning">${b.elevation_m}m</span></div>
+                        <div class="col-6"><strong>Medical Station:</strong> <span class="text-danger">${b.has_medical_station ? 'YES' : 'NO'}</span></div>
+                    </div>
+                </div>
+                <div class="small text-muted">
+                    <strong>Algorithmic Rationale:</strong> Ranked highest due to elevated high-ground terrain (clear of Kuakhai flood surge), immediate available bed capacity, and on-site medical trauma unit.
+                </div>
+            `;
+            const modalNavBtn = document.querySelector('#bestShelterModal .modal-footer a');
+            if (modalNavBtn) {
+                modalNavBtn.href = `/evacuation/?shelter_id=${b.id}`;
+            }
+            lucide.createIcons();
+        }
+    } catch (e) {
+        document.getElementById('bestShelterModalBody').innerHTML = '<div class="alert alert-danger">Error retrieving shelter recommendation.</div>';
+    }
+}
+
+async function quickUpdateOccupancy(id, current) {
+    const newOcc = prompt("Enter updated headcount for shelter:", current + 50);
+    if (newOcc !== null) {
+        try {
+            const res = await fetch(`/api/shelters/${id}/update-occupancy/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ current_occupancy: parseInt(newOcc) })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Shelter occupancy updated successfully!', 'success');
+                setTimeout(() => window.location.reload(), 800);
+            }
+        } catch (e) {
+            showToast('Error updating occupancy', 'error');
+        }
+    }
+}
+</script>
+{% endblock %}

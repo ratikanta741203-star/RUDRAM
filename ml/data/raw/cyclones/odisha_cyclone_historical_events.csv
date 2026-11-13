@@ -1,0 +1,15 @@
+name,year,date,landfall,lat,lon,max_wind_kmh,gust_kmh,pressure_hpa,category,affected_districts
+1999 Odisha Super Cyclone,1999,1999-10-29,Paradeep,20.3167,86.6167,260.0,310.0,912.0,Super Cyclonic Storm,"['Jagatsinghpur', 'Kendrapara', 'Puri', 'Khordha', 'Cuttack', 'Bhadrak']"
+Cyclone Phailin,2013,2013-10-12,Gopalpur,19.26,84.9,215.0,260.0,940.0,Extremely Severe Cyclonic Storm,"['Ganjam', 'Puri', 'Gajapati', 'Khordha', 'Kandhamal']"
+Cyclone Hudhud,2014,2014-10-12,Visakhapatnam,17.6868,83.2185,185.0,215.0,950.0,Very Severe Cyclonic Storm,"['Gajapati', 'Koraput', 'Malkangiri', 'Rayagada', 'Ganjam']"
+Cyclone Titli,2018,2018-10-11,Palasa,18.77,84.41,150.0,175.0,972.0,Very Severe Cyclonic Storm,"['Gajapati', 'Ganjam', 'Rayagada', 'Puri']"
+Cyclone Fani,2019,2019-05-03,Puri,19.8135,85.8312,215.0,250.0,932.0,Extremely Severe Cyclonic Storm,"['Puri', 'Khordha', 'Cuttack', 'Jagatsinghpur', 'Kendrapara', 'Bhadrak', 'Balasore']"
+Cyclone Amphan,2020,2020-05-20,Bakkhali,21.56,88.26,155.0,185.0,950.0,Super Cyclonic Storm,"['Balasore', 'Bhadrak', 'Mayurbhanj', 'Kendrapara', 'Jagatsinghpur']"
+Cyclone Yaas,2021,2021-05-26,Dhamanra,20.8,86.9,140.0,165.0,970.0,Very Severe Cyclonic Storm,"['Bhadrak', 'Balasore', 'Kendrapara', 'Mayurbhanj', 'Jagatsinghpur']"
+Cyclone Gulab,2021,2021-09-26,Kalingapatnam,18.34,84.13,85.0,100.0,992.0,Cyclonic Storm,"['Ganjam', 'Gajapati', 'Rayagada', 'Koraput', 'Malkangiri']"
+Cyclone Asani,2022,2022-05-11,Machilipatnam,16.18,81.13,105.0,120.0,988.0,Severe Cyclonic Storm,"['Ganjam', 'Puri', 'Jagatsinghpur', 'Kendrapara']"
+Cyclone Sitrang,2022,2022-10-24,Barisal,22.7,90.35,90.0,110.0,995.0,Cyclonic Storm,"['Balasore', 'Bhadrak', 'Kendrapara']"
+Cyclone Biparjoy,2023,2023-06-15,Jakhau,23.23,68.63,140.0,165.0,966.0,Very Severe Cyclonic Storm,['National Baseline - Gujarat Coast']
+Cyclone Midhili,2023,2023-11-17,Khepupara,21.98,90.23,80.0,95.0,998.0,Cyclonic Storm,"['Balasore', 'Bhadrak']"
+Cyclone Remal,2024,2024-05-26,Canning,22.3,88.66,120.0,135.0,978.0,Severe Cyclonic Storm,"['Balasore', 'Bhadrak', 'Mayurbhanj']"
+Cyclone Dana,2024,2024-10-25,Habalikhati Nature Camp,20.75,86.85,120.0,140.0,980.0,Severe Cyclonic Storm,"['Kendrapara', 'Bhadrak', 'Balasore', 'Jagatsinghpur', 'Puri', 'Cuttack']"

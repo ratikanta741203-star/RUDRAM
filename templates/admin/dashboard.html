@@ -1,0 +1,1400 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM - Admin Command Center & Management Dashboard{% endblock %}
+
+{% block meta_description %}Manage disaster alerts, shelters, rescue teams, relief resources, and user access from the RUDRAM admin command center.{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3 admin-command-center">
+
+    <!-- Admin Header Banner -->
+    <div class="card border-0 bg-primary bg-gradient text-white rounded-3 shadow-sm mb-4">
+        <div class="card-body p-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-white text-primary font-monospace fw-bold px-2 py-1" style="font-size: 0.75rem;">ADMIN COMMAND CENTER</span>
+                    <span class="badge bg-danger text-white font-monospace px-2 py-1" style="font-size: 0.75rem;"><i data-lucide="shield" style="width: 12px; height: 12px;" class="me-1"></i>SECURED ACCESS</span>
+                </div>
+                <h3 class="fw-bold mb-1">RUDRAM Disaster Management & Operational Control</h3>
+                <p class="mb-0 text-white-50 small">Manage emergency shelters, resource inventories, rescue teams, disaster records, alerts, and system access.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm fw-semibold">
+                    <i data-lucide="external-link" style="width: 14px; height: 14px;" class="me-1"></i> Public Citizen Dashboard
+                </a>
+                <a href="{% url 'logout' %}" class="btn btn-light btn-sm text-primary fw-bold px-3">
+                    <i data-lucide="log-out" style="width: 14px; height: 14px;" class="me-1"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Django Flash Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+                <strong>Notification:</strong> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Admin Nav Tabs -->
+    <ul class="nav nav-pills nav-fill bg-white border rounded-3 p-1 shadow-sm mb-4" id="adminTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold py-2" id="tab-overview" data-bs-toggle="tab" data-bs-target="#sec-overview" type="button" role="tab"><i data-lucide="layout-dashboard" style="width: 16px; height: 16px;" class="me-1"></i> Overview</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold py-2" id="tab-approvals" data-bs-toggle="tab" data-bs-target="#sec-approvals" type="button" role="tab">
+                <i data-lucide="check-square" style="width: 16px; height: 16px;" class="me-1"></i> Approvals
+                {% if pending_approvals_count > 0 %}
+                <span class="badge bg-danger text-white rounded-pill ms-1" style="font-size: 0.7rem;">{{ pending_approvals_count }}</span>
+                {% endif %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold py-2" id="tab-shelters" data-bs-toggle="tab" data-bs-target="#sec-shelters" type="button" role="tab"><i data-lucide="home" style="width: 16px; height: 16px;" class="me-1"></i> Shelters ({{ shelters|length }})</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold py-2" id="tab-resources" data-bs-toggle="tab" data-bs-target="#sec-resources" type="button" role="tab"><i data-lucide="package" style="width: 16px; height: 16px;" class="me-1"></i> Resources ({{ resources|length }})</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold py-2" id="tab-teams" data-bs-toggle="tab" data-bs-target="#sec-teams" type="button" role="tab"><i data-lucide="users" style="width: 16px; height: 16px;" class="me-1"></i> Rescue Teams ({{ rescue_teams|length }})</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold py-2" id="tab-disasters" data-bs-toggle="tab" data-bs-target="#sec-disasters" type="button" role="tab"><i data-lucide="alert-triangle" style="width: 16px; height: 16px;" class="me-1"></i> Disasters ({{ disasters|length }})</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold py-2" id="tab-alerts" data-bs-toggle="tab" data-bs-target="#sec-alerts" type="button" role="tab"><i data-lucide="bell" style="width: 16px; height: 16px;" class="me-1"></i> Alerts ({{ alerts|length }})</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold py-2" id="tab-users" data-bs-toggle="tab" data-bs-target="#sec-users" type="button" role="tab"><i data-lucide="user-check" style="width: 16px; height: 16px;" class="me-1"></i> Users ({{ users|length }})</button>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="adminTabContent">
+
+        <!-- ==================== 1. OVERVIEW SECTION ==================== -->
+        <div class="tab-pane fade show active" id="sec-overview" role="tabpanel">
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 bg-white">
+                        <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="text-secondary small fw-semibold">TOTAL SHELTER CAPACITY</div>
+                                <div class="fs-4 fw-bold text-dark mt-1">{{ total_shelter_occ }} / {{ total_shelter_cap }}</div>
+                                <div class="small text-success mt-1"><i data-lucide="check-circle" style="width: 12px; height: 12px;"></i> {{ avail_shelter_cap }} beds available</div>
+                            </div>
+                            <div class="p-3 bg-primary bg-opacity-10 text-primary rounded-3">
+                                <i data-lucide="home" style="width: 24px; height: 24px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 bg-white">
+                        <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="text-secondary small fw-semibold">ACTIVE DISASTERS</div>
+                                <div class="fs-4 fw-bold text-danger mt-1">{{ active_disasters_count }} Events</div>
+                                <div class="small text-muted mt-1">Real-time monitored</div>
+                            </div>
+                            <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-3">
+                                <i data-lucide="alert-octagon" style="width: 24px; height: 24px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 bg-white">
+                        <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="text-secondary small fw-semibold">ACTIVE ALERTS</div>
+                                <div class="fs-4 fw-bold text-warning mt-1">{{ active_alerts_count }} Broadcasts</div>
+                                <div class="small text-muted mt-1">CAP & Mobile notifications</div>
+                            </div>
+                            <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-3">
+                                <i data-lucide="bell" style="width: 24px; height: 24px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 bg-white">
+                        <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="text-secondary small fw-semibold">DEPLOYED RESCUE TEAMS</div>
+                                <div class="fs-4 fw-bold text-info mt-1">{{ deployed_teams_count }} Teams</div>
+                                <div class="small text-muted mt-1">NDRF / ODRAF / Fire Service</div>
+                            </div>
+                            <div class="p-3 bg-info bg-opacity-10 text-info rounded-3">
+                                <i data-lucide="shield" style="width: 24px; height: 24px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Logs Feed -->
+            <div class="card border-0 shadow-sm bg-white mb-4">
+                <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0 text-dark"><i data-lucide="history" style="width: 16px; height: 16px;" class="me-1 text-primary"></i> Recent Administrative Audit Logs</h6>
+                    <span class="badge bg-light text-dark border font-monospace">Live Records</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Target Model</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in audit_logs %}
+                            <tr>
+                                <td class="text-muted font-monospace">{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                                <td class="fw-semibold text-primary"><i data-lucide="user" style="width: 14px; height: 14px;" class="me-1"></i>{{ log.user_name }}</td>
+                                <td><span class="badge bg-secondary bg-opacity-10 text-dark border">{{ log.action }}</span></td>
+                                <td><code>{{ log.target_model }}</code></td>
+                                <td class="text-secondary">{{ log.details }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-3">No recent audit log records.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== APPROVALS SECTION ==================== -->
+        <div class="tab-pane fade" id="sec-approvals" role="tabpanel">
+            <div class="card border-0 shadow-sm bg-white mb-4">
+                <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0 text-white"><i data-lucide="check-square" style="width: 18px; height: 18px;" class="me-2 text-warning"></i> Operational Change Approval Requests</h6>
+                    {% if pending_approvals_count > 0 %}
+                    <span class="badge bg-danger text-white font-monospace fw-bold">{{ pending_approvals_count }} Pending Review</span>
+                    {% else %}
+                    <span class="badge bg-success text-white font-monospace">No Pending Requests</span>
+                    {% endif %}
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID & Date</th>
+                                <th>Requested By</th>
+                                <th>Type</th>
+                                <th>Target Object</th>
+                                <th>Requested Change</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in approval_requests %}
+                            <tr>
+                                <td>
+                                    <span class="fw-bold text-white">#{{ req.id }}</span>
+                                    <div class="small text-muted">{{ req.created_at|date:"Y-m-d H:i" }}</div>
+                                </td>
+                                <td>
+                                    <strong class="text-info"><i data-lucide="user" style="width: 13px; height: 13px;" class="me-1"></i>{{ req.requested_by.username }}</strong>
+                                    <div class="small text-secondary">{{ req.requested_by.profile.get_role_display|default:"Emergency Operator" }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary text-white">{{ req.get_request_type_display }}</span>
+                                </td>
+                                <td>
+                                    <strong class="text-white">{{ req.target_object_name|default:req.target_model }}</strong>
+                                    <div class="small text-muted">ID: {{ req.target_object_id }}</div>
+                                </td>
+                                <td>
+                                    <code class="text-info">{{ req.requested_changes }}</code>
+                                </td>
+                                <td class="text-secondary small">{{ req.reason }}</td>
+                                <td>
+                                    {% if req.status == 'PENDING' %}
+                                        <span class="badge bg-warning text-dark fw-bold">PENDING</span>
+                                    {% elif req.status == 'APPROVED' %}
+                                        <span class="badge bg-success text-white">APPROVED</span>
+                                    {% else %}
+                                        <span class="badge bg-danger text-white">REJECTED</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if req.status == 'PENDING' %}
+                                        <form action="{% url 'admin_approval_approve' req.id %}" method="POST" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-success py-0 px-2 fw-bold me-1">Approve</button>
+                                        </form>
+                                        <button class="btn btn-sm btn-outline-danger py-0 px-2 fw-bold" data-bs-toggle="modal" data-bs-target="#rejectModal{{ req.id }}">Reject</button>
+
+                                        <!-- Reject Modal -->
+                                        <div class="modal fade text-start" id="rejectModal{{ req.id }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <form action="{% url 'admin_approval_reject' req.id %}" method="POST">
+                                                        {% csrf_token %}
+                                                        <div class="modal-header">
+                                                            <h6 class="modal-title fw-bold text-white">Reject Operational Request #{{ req.id }}</h6>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Rejection Reason</label>
+                                                                <textarea name="rejection_reason" class="form-control form-control-sm" rows="3" placeholder="Provide reason for rejecting this operational request..." required></textarea>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-danger btn-sm fw-bold">Reject Request</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <span class="small text-muted">Reviewed by {{ req.reviewed_by.username|default:"Admin" }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">No operational approval requests logged.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 2. SHELTERS SECTION ==================== -->
+        <div class="tab-pane fade" id="sec-shelters" role="tabpanel">
+            <div class="card border-0 shadow-sm bg-white">
+                <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0 text-dark"><i data-lucide="home" style="width: 18px; height: 18px;" class="me-2 text-primary"></i> Shelter & Evacuation Camp Directory</h6>
+                    <button class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#createShelterModal">
+                        <i data-lucide="plus" style="width: 14px; height: 14px;" class="me-1"></i> Add New Shelter
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Shelter Name</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                                <th>Capacity</th>
+                                <th>Occupancy</th>
+                                <th>Available Beds</th>
+                                <th>Contact Officer</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in shelters %}
+                            <tr>
+                                <td class="fw-bold text-dark">{{ s.name }}</td>
+                                <td class="text-secondary">{{ s.address }}</td>
+                                <td>
+                                    {% if s.status == 'OPEN' %}
+                                        <span class="badge bg-success">OPEN</span>
+                                    {% elif s.status == 'NEAR_CAPACITY' %}
+                                        <span class="badge bg-warning text-dark">NEAR CAPACITY</span>
+                                    {% elif s.status == 'FULL' %}
+                                        <span class="badge bg-danger">FULL</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">CLOSED</span>
+                                    {% endif %}
+                                </td>
+                                <td class="fw-semibold">{{ s.total_capacity }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span>{{ s.current_occupancy }}</span>
+                                        <div class="progress flex-grow-1" style="height: 6px; min-width: 60px;">
+                                            <div class="progress-bar {% if s.occupancy_percentage >= 90 %}bg-danger{% elif s.occupancy_percentage >= 75 %}bg-warning{% else %}bg-success{% endif %}" role="progressbar" style="width: {{ s.occupancy_percentage }}%;"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="fw-bold text-success">{{ s.available_capacity }}</td>
+                                <td class="text-muted">{{ s.contact_person }} ({{ s.phone_number }})</td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline-primary btn-sm me-1 py-0 px-2" data-bs-toggle="modal" data-bs-target="#editShelterModal{{ s.id }}">Edit Capacity</button>
+                                    <form action="{% url 'admin_shelter_delete' s.id %}" method="POST" class="d-inline" data-confirm="Are you sure you want to delete shelter {{ s.name }}?">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                            <!-- Edit Shelter Modal -->
+                            <div class="modal fade" id="editShelterModal{{ s.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form action="{% url 'admin_shelter_update' s.id %}" method="POST">
+                                            {% csrf_token %}
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fs-6 fw-bold">Update Shelter Capacity: {{ s.name }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-semibold">Total Capacity (Beds/Capacity)</label>
+                                                    <input type="number" name="total_capacity" class="form-control form-control-sm" value="{{ s.total_capacity }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-semibold">Current Occupancy (People Currently Staying)</label>
+                                                    <input type="number" name="current_occupancy" class="form-control form-control-sm" value="{{ s.current_occupancy }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-semibold">Status Override</label>
+                                                    <select name="status" class="form-select form-select-sm">
+                                                        <option value="OPEN" {% if s.status == 'OPEN' %}selected{% endif %}>OPEN</option>
+                                                        <option value="NEAR_CAPACITY" {% if s.status == 'NEAR_CAPACITY' %}selected{% endif %}>NEAR CAPACITY</option>
+                                                        <option value="FULL" {% if s.status == 'FULL' %}selected{% endif %}>FULL</option>
+                                                        <option value="CLOSED" {% if s.status == 'CLOSED' %}selected{% endif %}>CLOSED</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary btn-sm">Save Capacity Changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">No shelters registered.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Shelter Modal -->
+        <div class="modal fade" id="createShelterModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <form action="{% url 'admin_shelter_create' %}" method="POST" id="createShelterForm" onsubmit="return validateShelterFormBeforeSubmit(event)">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title fs-6 fw-bold"><i data-lucide="map-pin" class="me-2 text-info" style="width: 18px; height: 18px;"></i>Add New Emergency Shelter</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body row g-3 text-start">
+                            <!-- Smart Location Search Autocomplete Field -->
+                            <div class="col-md-12 position-relative">
+                                <label class="form-label small fw-semibold text-info d-flex align-items-center justify-content-between mb-1">
+                                    <span><i data-lucide="sparkles" class="me-1" style="width: 14px; height: 14px;"></i>Search Location (Autocomplete India)</span>
+                                    <span class="small text-muted fw-normal" style="font-size: 0.72rem;">Type place, institute, hospital, village or city...</span>
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="shelterSmartSearchInput" oninput="onSmartSearchInput()" onfocus="onSmartSearchInput()" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Search institute, hospital, village, city or any place..." autocomplete="off">
+                                    <button type="button" class="btn btn-outline-secondary border-secondary py-0 px-2" id="btnShelterSmartSearchClear" onclick="clearSmartShelterSearch()" title="Clear Search">
+                                        <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Autocomplete Dropdown List Container -->
+                                <div id="shelterAutocompleteDropdown" class="dropdown-menu dropdown-menu-dark w-100 shadow-lg mt-1 p-0 overflow-auto" style="display: none; max-height: 280px; z-index: 9999; border: 1px solid rgba(56, 189, 248, 0.4); position: absolute; top: 100%; left: 0; right: 0;">
+                                    <div id="shelterAutocompleteContent"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label small fw-semibold">Shelter Name</label>
+                                <input type="text" name="name" id="shelterNameInput" class="form-control form-control-sm" placeholder="e.g. Puri Cyclone Shelter #4" required>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label small fw-semibold">Location / Address</label>
+                                <input type="text" name="address" id="shelterAddressInput" class="form-control form-control-sm" placeholder="e.g. Grand Road, Puri, Odisha" required>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label small fw-semibold">PIN Code (6 Digits)</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" name="postal_code" id="shelterPinCodeInput" class="form-control form-control-sm" placeholder="e.g. 752001" maxlength="6" pattern="\d{6}" required>
+                                    <button type="button" class="btn btn-info btn-sm fw-bold px-3" id="btnFindShelterLocation" onclick="findShelterLocation()">
+                                        <i data-lucide="search" style="width: 13px; height: 13px;" class="me-1"></i>Find Location
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Location Status / Selection Feedback Bar -->
+                            <div class="col-12" id="shelterLocFeedbackContainer" style="display: none;">
+                                <div id="shelterLocFeedbackAlert" class="alert py-2 px-3 small mb-0 d-flex align-items-center justify-content-between">
+                                    <span id="shelterLocFeedbackText">Finding location...</span>
+                                    <span id="shelterLocStatusBadge" class="badge bg-secondary">LOOKUP</span>
+                                </div>
+                            </div>
+
+                            <!-- Multiple Candidates Selection List -->
+                            <div class="col-12 d-none" id="shelterCandidatesContainer">
+                                <div class="p-2 border rounded bg-dark text-white">
+                                    <div class="small fw-bold text-info mb-2">Multiple Locations Found — Please Select Match:</div>
+                                    <div class="list-group list-group-flush small" id="shelterCandidatesList"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Latitude</label>
+                                <input type="number" step="any" name="latitude" id="shelterLatInput" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Auto-populated" readonly required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Longitude</label>
+                                <input type="number" step="any" name="longitude" id="shelterLonInput" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Auto-populated" readonly required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Elevation (meters)</label>
+                                <input type="number" step="any" name="elevation_m" id="shelterElevInput" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Auto-calculated" readonly required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Total Capacity (Persons)</label>
+                                <input type="number" name="total_capacity" class="form-control form-control-sm" value="1000" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Initial Occupancy</label>
+                                <input type="number" name="current_occupancy" class="form-control form-control-sm" value="0" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Contact Person</label>
+                                <input type="text" name="contact_person" class="form-control form-control-sm" value="District Relief Officer">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Phone Number</label>
+                                <input type="text" name="phone_number" class="form-control form-control-sm" value="0674-2391077">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary btn-sm fw-bold" id="btnCreateShelterSubmit">Create Shelter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 3. RESOURCES SECTION ==================== -->
+        <div class="tab-pane fade" id="sec-resources" role="tabpanel">
+            <div class="card border-0 shadow-sm bg-white">
+                <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0 text-dark"><i data-lucide="package" style="width: 18px; height: 18px;" class="me-2 text-primary"></i> Relief Supplies & Equipment Inventory</h6>
+                    <button class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#createResourceModal">
+                        <i data-lucide="plus" style="width: 14px; height: 14px;" class="me-1"></i> Add Resource Stock
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Resource Name</th>
+                                <th>Category</th>
+                                <th>Available Stock</th>
+                                <th>Target Required</th>
+                                <th>Depot Location</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in resources %}
+                            <tr>
+                                <td class="fw-bold text-dark">{{ r.name }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ r.get_category_display }}</span></td>
+                                <td class="fw-bold text-success fs-6">{{ r.quantity_available }} {{ r.unit }}</td>
+                                <td class="text-secondary">{{ r.quantity_required }} {{ r.unit }}</td>
+                                <td class="text-muted">{{ r.warehouse_location }}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline-primary btn-sm me-1 py-0 px-2" data-bs-toggle="modal" data-bs-target="#editResourceModal{{ r.id }}">Edit Stock</button>
+                                    <form action="{% url 'admin_resource_delete' r.id %}" method="POST" class="d-inline" data-confirm="Delete resource {{ r.name }}?">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                            <!-- Edit Resource Modal -->
+                            <div class="modal fade" id="editResourceModal{{ r.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form action="{% url 'admin_resource_update' r.id %}" method="POST">
+                                            {% csrf_token %}
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fs-6 fw-bold">Update Inventory: {{ r.name }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-semibold">Quantity Available</label>
+                                                    <input type="number" name="quantity_available" class="form-control form-control-sm" value="{{ r.quantity_available }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-semibold">Target Required Quantity</label>
+                                                    <input type="number" name="quantity_required" class="form-control form-control-sm" value="{{ r.quantity_required }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-semibold">Warehouse / Depot Location</label>
+                                                    <input type="text" name="warehouse_location" class="form-control form-control-sm" value="{{ r.warehouse_location }}">
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary btn-sm">Save Stock</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No resources listed.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Resource Modal -->
+        <div class="modal fade" id="createResourceModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="{% url 'admin_resource_create' %}" method="POST">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title fs-6 fw-bold">Add Resource Item</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-start">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Resource Name</label>
+                                <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. Inflatable Rescue Boats" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Category</label>
+                                <select name="category" class="form-select form-select-sm">
+                                    <option value="WATER">Drinking Water</option>
+                                    <option value="FOOD">Ration & Dry Food</option>
+                                    <option value="MEDICINE">Medical Kits / ORS</option>
+                                    <option value="RESCUE_BOATS">Rescue Boats</option>
+                                    <option value="PUMPS">De-watering Pumps</option>
+                                    <option value="BLANKETS">Blankets & Tarpaulins</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Quantity Available</label>
+                                <input type="number" name="quantity_available" class="form-control form-control-sm" value="500" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Target Required Quantity</label>
+                                <input type="number" name="quantity_required" class="form-control form-control-sm" value="1000" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Unit</label>
+                                <input type="text" name="unit" class="form-control form-control-sm" value="Units / Kits">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Storage Warehouse</label>
+                                <input type="text" name="warehouse_location" class="form-control form-control-sm" value="State Relief Central Depot">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary btn-sm">Create Resource</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 4. RESCUE TEAMS SECTION ==================== -->
+        <div class="tab-pane fade" id="sec-teams" role="tabpanel">
+            <div class="card border-0 shadow-sm bg-white">
+                <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0 text-dark"><i data-lucide="users" style="width: 18px; height: 18px;" class="me-2 text-primary"></i> NDRF / ODRAF / Emergency Rescue Teams</h6>
+                    <button class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#createTeamModal">
+                        <i data-lucide="plus" style="width: 14px; height: 14px;" class="me-1"></i> Add Rescue Unit
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Team Name</th>
+                                <th>Type</th>
+                                <th>Personnel</th>
+                                <th>Status</th>
+                                <th>Commandant / Lead</th>
+                                <th>Contact Phone</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in rescue_teams %}
+                            <tr>
+                                <td class="fw-bold text-dark">{{ t.name }}</td>
+                                <td><span class="badge bg-info bg-opacity-25 text-info border">{{ t.get_team_type_display }}</span></td>
+                                <td class="fw-semibold">{{ t.members_count }} personnel</td>
+                                <td>
+                                    {% if t.status == 'AVAILABLE' %}
+                                        <span class="badge bg-success">AVAILABLE</span>
+                                    {% elif t.status == 'DEPLOYED' %}
+                                        <span class="badge bg-primary">DEPLOYED</span>
+                                    {% elif t.status == 'BUSY' %}
+                                        <span class="badge bg-warning text-dark">BUSY IN RESCUE</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">OFFLINE</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ t.lead_officer }}</td>
+                                <td>{{ t.contact_phone }}</td>
+                                <td class="text-end">
+                                    <form action="{% url 'admin_team_delete' t.id %}" method="POST" class="d-inline" data-confirm="Delete rescue unit {{ t.name }}?">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">No rescue teams registered.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Team Modal -->
+        <div class="modal fade" id="createTeamModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="{% url 'admin_team_create' %}" method="POST">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title fs-6 fw-bold">Register Rescue Team Unit</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-start">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Team Name</label>
+                                <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. ODRAF Unit 3 — Cuttack Battalion" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Force / Organization</label>
+                                <select name="team_type" class="form-select form-select-sm">
+                                    <option value="NDRF">NDRF</option>
+                                    <option value="ODRAF">ODRAF</option>
+                                    <option value="FIRE_RESCUE">State Fire & Rescue</option>
+                                    <option value="MEDICAL_RAPID">Mobile Medical</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Personnel Count</label>
+                                <input type="number" name="members_count" class="form-control form-control-sm" value="24" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Lead Officer Name</label>
+                                <input type="text" name="lead_officer" class="form-control form-control-sm" value="Commandant Officer">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Contact Phone</label>
+                                <input type="text" name="contact_phone" class="form-control form-control-sm" value="94370-11200">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Status</label>
+                                <select name="status" class="form-select form-select-sm">
+                                    <option value="AVAILABLE">AVAILABLE</option>
+                                    <option value="DEPLOYED">DEPLOYED</option>
+                                    <option value="BUSY">BUSY</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary btn-sm">Add Team</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 5. DISASTERS SECTION ==================== -->
+        <div class="tab-pane fade" id="sec-disasters" role="tabpanel">
+            <div class="card border-0 shadow-sm bg-white">
+                <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0 text-dark"><i data-lucide="alert-triangle" style="width: 18px; height: 18px;" class="me-2 text-danger"></i> Disaster Events & Hazard Monitoring</h6>
+                    <button class="btn btn-danger btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#createDisasterModal">
+                        <i data-lucide="plus" style="width: 14px; height: 14px;" class="me-1"></i> Register New Incident
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Event Title</th>
+                                <th>Type</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                                <th>Location</th>
+                                <th>Exposed Pop.</th>
+                                <th>Risk Score</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d in disasters %}
+                            <tr>
+                                <td class="fw-bold text-dark">{{ d.title }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ d.get_disaster_type_display }}</span></td>
+                                <td>
+                                    {% if d.severity == 'CRITICAL' %}
+                                        <span class="badge bg-danger">CRITICAL</span>
+                                    {% elif d.severity == 'HIGH' %}
+                                        <span class="badge bg-warning text-dark">HIGH</span>
+                                    {% else %}
+                                        <span class="badge bg-info text-dark">MODERATE</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge bg-secondary">{{ d.status }}</span></td>
+                                <td>{{ d.location_name }}</td>
+                                <td>{{ d.exposed_population }}</td>
+                                <td class="fw-bold text-danger">{{ d.risk_score }}%</td>
+                                <td class="text-end">
+                                    <form action="{% url 'admin_disaster_delete' d.id %}" method="POST" class="d-inline" data-confirm="Delete disaster record {{ d.title }}?">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">No active disaster events.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Disaster Modal -->
+        <div class="modal fade" id="createDisasterModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="{% url 'admin_disaster_create' %}" method="POST">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title fs-6 fw-bold">Register Disaster Event Record</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-start">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Event Title</label>
+                                <input type="text" name="title" class="form-control form-control-sm" placeholder="e.g. Mahanadi Riverine Flash Flood" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Disaster Type</label>
+                                <select name="disaster_type" class="form-select form-select-sm">
+                                    <option value="FLOOD">Flood & Inundation</option>
+                                    <option value="CYCLONE">Cyclone & Coastal Surge</option>
+                                    <option value="HEAVY_RAINFALL">Extreme Heavy Rainfall</option>
+                                    <option value="WILDFIRE">Forest Fire</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Severity</label>
+                                <select name="severity" class="form-select form-select-sm">
+                                    <option value="CRITICAL">CRITICAL</option>
+                                    <option value="HIGH">HIGH</option>
+                                    <option value="MODERATE">MODERATE</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Affected Location</label>
+                                <input type="text" name="location_name" class="form-control form-control-sm" value="Bhubaneswar Urban Sector" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger btn-sm">Create Disaster Record</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 6. ALERTS SECTION ==================== -->
+        <div class="tab-pane fade" id="sec-alerts" role="tabpanel">
+            <div class="card border-0 shadow-sm bg-white">
+                <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0 text-dark"><i data-lucide="bell" style="width: 18px; height: 18px;" class="me-2 text-warning"></i> Emergency Public Alerts & CAP Broadcasts</h6>
+                    <button class="btn btn-warning btn-sm text-dark fw-semibold" data-bs-toggle="modal" data-bs-target="#createAlertModal">
+                        <i data-lucide="send" style="width: 14px; height: 14px;" class="me-1"></i> Broadcast Live Alert
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Alert Title</th>
+                                <th>Severity</th>
+                                <th>Location</th>
+                                <th>Recommended Action</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in alerts %}
+                            <tr>
+                                <td class="fw-bold text-dark">{{ a.title }}</td>
+                                <td>
+                                    {% if a.severity == 'CRITICAL' %}
+                                        <span class="badge bg-danger">RED ALERT</span>
+                                    {% elif a.severity == 'HIGH' %}
+                                        <span class="badge bg-warning text-dark">ORANGE ALERT</span>
+                                    {% else %}
+                                        <span class="badge bg-info text-dark">YELLOW ALERT</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ a.location_name }}</td>
+                                <td class="text-secondary small">{{ a.recommended_action }}</td>
+                                <td>
+                                    {% if a.is_active %}
+                                        <span class="badge bg-success">ACTIVE BROADCAST</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">DEACTIVATED</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <form action="{% url 'admin_alert_delete' a.id %}" method="POST" class="d-inline" data-confirm="Delete alert {{ a.title }}?">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No active public emergency alerts.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Alert Modal -->
+        <div class="modal fade" id="createAlertModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="{% url 'admin_alert_create' %}" method="POST">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title fs-6 fw-bold">Broadcast Emergency Alert</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-start">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Alert Title</label>
+                                <input type="text" name="title" class="form-control form-control-sm" placeholder="e.g. FLASH FLOOD RED ALERT — MAHANADI BASIN" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Severity</label>
+                                <select name="severity" class="form-select form-select-sm">
+                                    <option value="CRITICAL">CRITICAL (Red Alert)</option>
+                                    <option value="HIGH">HIGH (Orange Alert)</option>
+                                    <option value="WARNING">WARNING (Yellow Alert)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Target Location</label>
+                                <input type="text" name="location_name" class="form-control form-control-sm" value="Bhubaneswar Urban Sector" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Alert Message</label>
+                                <textarea name="message" class="form-control form-control-sm" rows="3" required>Water levels rising rapidly. Move to designated high-ground shelters immediately.</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Recommended Citizen Action</label>
+                                <input type="text" name="recommended_action" class="form-control form-control-sm" value="Evacuate low-lying areas and stay tuned to official CAP broadcasts.">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-warning text-dark fw-bold btn-sm">Publish Live Alert</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 7. USERS SECTION ==================== -->
+        <div class="tab-pane fade" id="sec-users" role="tabpanel">
+            <div class="card border-0 shadow-sm bg-white">
+                <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0 text-dark"><i data-lucide="user-check" style="width: 18px; height: 18px;" class="me-2 text-primary"></i> System Access & Role Management</h6>
+                    <span class="badge bg-light text-dark border">Secure User Directory</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Active Role</th>
+                                <th>Status</th>
+                                <th>Superuser/Staff</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in users %}
+                            <tr>
+                                <td class="fw-bold text-dark"><i data-lucide="user" style="width: 14px; height: 14px;" class="me-1"></i>{{ u.username }}</td>
+                                <td class="text-secondary">{{ u.email|default:"No email set" }}</td>
+                                <td>
+                                    <span class="badge {% if u.profile.role == 'ADMIN' %}bg-danger{% elif u.profile.role == 'EMERGENCY_OPERATOR' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                        {{ u.profile.get_role_display|default:u.profile.role }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if u.is_active %}
+                                        <span class="badge bg-success">ACTIVE</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">INACTIVE</span>
+                                    {% endif %}
+                                </td>
+                                <td>{% if u.is_staff %}<span class="badge bg-info text-dark">STAFF</span>{% else %}<span class="badge bg-light text-dark border">CITIZEN</span>{% endif %}</td>
+                                <td class="text-end">
+                                    <form action="{% url 'admin_user_toggle_active' u.id %}" method="POST" class="d-inline me-1">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-warning btn-sm py-0 px-2">{% if u.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+                                    </form>
+                                    <button class="btn btn-outline-primary btn-sm py-0 px-2" data-bs-toggle="modal" data-bs-target="#editUserRoleModal{{ u.id }}">Change Role</button>
+                                </td>
+                            </tr>
+
+                            <!-- Edit Role Modal -->
+                            <div class="modal fade" id="editUserRoleModal{{ u.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form action="{% url 'admin_user_update_role' u.id %}" method="POST">
+                                            {% csrf_token %}
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fs-6 fw-bold">Update Role: {{ u.username }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-semibold">Assign Role</label>
+                                                    <select name="role" class="form-select form-select-sm">
+                                                        <option value="ADMIN" {% if u.profile.role == 'ADMIN' %}selected{% endif %}>ADMIN / DISASTER COMMANDER</option>
+                                                        <option value="EMERGENCY_OPERATOR" {% if u.profile.role == 'EMERGENCY_OPERATOR' %}selected{% endif %}>EMERGENCY OPERATOR</option>
+                                                        <option value="ANALYST" {% if u.profile.role == 'ANALYST' %}selected{% endif %}>GIS ANALYST</option>
+                                                        <option value="CITIZEN" {% if u.profile.role == 'CITIZEN' %}selected{% endif %}>CITIZEN / PUBLIC</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary btn-sm">Update Role</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No users found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let smartSearchDebounceTimer = null;
+let currentSmartSearchAbortController = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('shelterSmartSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', onSmartSearchInput);
+        searchInput.addEventListener('focus', () => {
+            if (searchInput.value.trim().length >= 2) onSmartSearchInput();
+        });
+    }
+
+    // Dismiss autocomplete when clicking outside
+    document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('shelterAutocompleteDropdown');
+        const searchInput = document.getElementById('shelterSmartSearchInput');
+        if (dropdown && !dropdown.contains(e.target) && searchInput && e.target !== searchInput) {
+            hideSmartSearchDropdown();
+        }
+    });
+});
+
+function showSmartSearchDropdown() {
+    const dropdown = document.getElementById('shelterAutocompleteDropdown');
+    if (dropdown) {
+        dropdown.classList.add('show');
+        dropdown.classList.remove('d-none');
+        dropdown.style.display = 'block';
+    }
+}
+
+function hideSmartSearchDropdown() {
+    const dropdown = document.getElementById('shelterAutocompleteDropdown');
+    if (dropdown) {
+        dropdown.classList.remove('show');
+        dropdown.classList.add('d-none');
+        dropdown.style.display = 'none';
+    }
+}
+
+function onSmartSearchInput() {
+    clearTimeout(smartSearchDebounceTimer);
+    const searchInput = document.getElementById('shelterSmartSearchInput');
+    const content = document.getElementById('shelterAutocompleteContent');
+
+    if (!searchInput) return;
+    const query = searchInput.value.trim();
+
+    if (query.length < 2) {
+        hideSmartSearchDropdown();
+        if (content) content.innerHTML = '';
+        return;
+    }
+
+    showSmartSearchDropdown();
+    if (content) {
+        content.innerHTML = `
+            <div class="p-3 text-center text-muted small">
+                <span class="spinner-border spinner-border-sm me-2 text-info"></span>Searching locations...
+            </div>
+        `;
+    }
+
+    // 400ms Debounce
+    smartSearchDebounceTimer = setTimeout(() => {
+        fetchSmartLocationSuggestions(query);
+    }, 400);
+}
+
+async function fetchSmartLocationSuggestions(query) {
+    const content = document.getElementById('shelterAutocompleteContent');
+
+    if (currentSmartSearchAbortController) {
+        currentSmartSearchAbortController.abort();
+    }
+    currentSmartSearchAbortController = new AbortController();
+
+    try {
+        const res = await fetch(`/api/location/search/?q=${encodeURIComponent(query)}`, {
+            signal: currentSmartSearchAbortController.signal
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success && Array.isArray(data.results) && data.results.length > 0) {
+            let html = '<div class="list-group list-group-flush small">';
+            data.results.forEach((item, idx) => {
+                const elevStr = item.elevation_m !== null ? item.elevation_m + 'm' : 'N/A';
+                const pinStr = item.pincode ? 'PIN: ' + item.pincode : 'PIN: --';
+                const cityStateStr = [item.city, item.state].filter(Boolean).join(', ') || 'India';
+                html += `
+                    <button type="button" class="list-group-item list-group-item-action bg-dark text-light border-secondary py-2 px-3 hover-highlight" onclick="selectSmartShelterLocation(${idx})">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <strong class="text-white">${escapeHtml(item.place_name || item.name)}</strong>
+                            <span class="badge bg-info bg-opacity-25 text-info ms-2">${escapeHtml(cityStateStr)}</span>
+                        </div>
+                        <div class="small text-secondary text-truncate">${escapeHtml(item.display_name)}</div>
+                        <div class="d-flex gap-3 small text-muted font-monospace mt-1">
+                            <span>Lat: ${item.latitude}</span>
+                            <span>Lon: ${item.longitude}</span>
+                            <span>Elev: ${elevStr}</span>
+                            <span class="text-warning">${pinStr}</span>
+                        </div>
+                    </button>
+                `;
+            });
+            html += '</div>';
+            if (content) content.innerHTML = html;
+            showSmartSearchDropdown();
+            window.latestShelterSearchCandidateResults = data.results;
+        } else if (data.success && Array.isArray(data.results) && data.results.length === 0) {
+            if (content) {
+                content.innerHTML = `
+                    <div class="p-3 text-center text-warning small">
+                        No matching location found in India.
+                    </div>
+                `;
+            }
+            showSmartSearchDropdown();
+        } else {
+            const err = data.error || data.message || 'Location search temporarily unavailable.';
+            if (content) {
+                content.innerHTML = `
+                    <div class="p-3 text-center text-danger small d-flex justify-content-between align-items-center">
+                        <span>${escapeHtml(err)}</span>
+                        <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 ms-2" onclick="onSmartSearchInput()">Retry</button>
+                    </div>
+                `;
+            }
+            showSmartSearchDropdown();
+        }
+    } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.error('Smart location search error:', err);
+        if (content) {
+            content.innerHTML = `
+                <div class="p-3 text-center text-danger small d-flex justify-content-between align-items-center">
+                    <span>Location search temporarily unavailable.</span>
+                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 ms-2" onclick="onSmartSearchInput()">Retry</button>
+                </div>
+            `;
+        }
+        showSmartSearchDropdown();
+    }
+}
+
+function selectSmartShelterLocation(index) {
+    const searchInput = document.getElementById('shelterSmartSearchInput');
+    const nameInput = document.getElementById('shelterNameInput');
+    const addrInput = document.getElementById('shelterAddressInput');
+    const pinInput = document.getElementById('shelterPinCodeInput');
+    const latInput = document.getElementById('shelterLatInput');
+    const lonInput = document.getElementById('shelterLonInput');
+    const elevInput = document.getElementById('shelterElevInput');
+
+    const results = window.latestShelterSearchCandidateResults || [];
+    if (index < 0 || index >= results.length) return;
+
+    const loc = results[index];
+    hideSmartSearchDropdown();
+    if (searchInput) searchInput.value = loc.place_name || loc.name || loc.display_name;
+
+    // Fill shelter form fields automatically
+    if (nameInput) {
+        if (!nameInput.value || nameInput.value.trim() === '' || nameInput.value.includes('Puri Cyclone Shelter #4')) {
+            nameInput.value = loc.place_name || loc.name || loc.display_name;
+        }
+    }
+    if (addrInput) addrInput.value = loc.display_name || loc.full_address || loc.address || '';
+    if (pinInput) pinInput.value = loc.pincode || loc.postal_code || '';
+    if (latInput) { latInput.value = loc.latitude; latInput.readOnly = false; }
+    if (lonInput) { lonInput.value = loc.longitude; lonInput.readOnly = false; }
+    if (elevInput) { elevInput.value = (loc.elevation_m !== null && loc.elevation_m !== undefined) ? loc.elevation_m : ''; elevInput.readOnly = false; }
+
+    // Feedback Alert
+    const feedbackContainer = document.getElementById('shelterLocFeedbackContainer');
+    const feedbackAlert = document.getElementById('shelterLocFeedbackAlert');
+    const feedbackText = document.getElementById('shelterLocFeedbackText');
+    const statusBadge = document.getElementById('shelterLocStatusBadge');
+
+    if (feedbackContainer && feedbackAlert && feedbackText) {
+        feedbackContainer.style.display = 'block';
+        feedbackAlert.className = 'alert alert-success py-2 px-3 small mb-0 d-flex align-items-center justify-content-between';
+        feedbackText.innerText = `Selected: ${loc.place_name || loc.display_name} (Lat: ${loc.latitude}, Lon: ${loc.longitude}, Elev: ${loc.elevation_m}m)`;
+        if (statusBadge) {
+            statusBadge.className = 'badge bg-success';
+            statusBadge.innerText = 'LOCATION SELECTED';
+        }
+    }
+}
+
+function clearSmartShelterSearch() {
+    const input = document.getElementById('shelterSmartSearchInput');
+    const dropdown = document.getElementById('shelterAutocompleteDropdown');
+    if (input) input.value = '';
+    if (dropdown) dropdown.classList.add('d-none');
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function findShelterLocation() {
+    const btn = document.getElementById('btnFindShelterLocation');
+    const addrInput = document.getElementById('shelterAddressInput');
+    const pinInput = document.getElementById('shelterPinCodeInput');
+
+    const latInput = document.getElementById('shelterLatInput');
+    const lonInput = document.getElementById('shelterLonInput');
+    const elevInput = document.getElementById('shelterElevInput');
+
+    const feedbackContainer = document.getElementById('shelterLocFeedbackContainer');
+    const feedbackAlert = document.getElementById('shelterLocFeedbackAlert');
+    const feedbackText = document.getElementById('shelterLocFeedbackText');
+    const statusBadge = document.getElementById('shelterLocStatusBadge');
+    const candidatesContainer = document.getElementById('shelterCandidatesContainer');
+    const candidatesList = document.getElementById('shelterCandidatesList');
+
+    if (candidatesContainer) candidatesContainer.classList.add('d-none');
+    if (candidatesList) candidatesList.innerHTML = '';
+
+    const addressVal = addrInput ? addrInput.value.trim() : '';
+    const pinVal = pinInput ? pinInput.value.trim() : '';
+
+    // Validate 6-digit Indian PIN Code
+    if (!pinVal || !/^\d{6}$/.test(pinVal)) {
+        if (feedbackContainer && feedbackAlert && feedbackText) {
+            feedbackContainer.style.display = 'block';
+            feedbackAlert.className = 'alert alert-danger py-2 px-3 small mb-0 d-flex align-items-center justify-content-between';
+            feedbackText.innerText = 'Please enter a valid 6-digit Indian PIN Code (e.g. 752001).';
+            if (statusBadge) {
+                statusBadge.className = 'badge bg-danger';
+                statusBadge.innerText = 'INVALID PIN';
+            }
+        }
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Finding location...';
+    }
+
+    if (feedbackContainer && feedbackAlert && feedbackText) {
+        feedbackContainer.style.display = 'block';
+        feedbackAlert.className = 'alert alert-info py-2 px-3 small mb-0 d-flex align-items-center justify-content-between';
+        feedbackText.innerText = 'Finding real location and elevation data...';
+        if (statusBadge) {
+            statusBadge.className = 'badge bg-info text-dark';
+            statusBadge.innerText = 'GEOCODING';
+        }
+    }
+
+    try {
+        const url = `/api/location/geocode/?address=${encodeURIComponent(addressVal)}&postal_code=${encodeURIComponent(pinVal)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            if (data.multiple && Array.isArray(data.results) && data.results.length > 1) {
+                if (feedbackAlert && feedbackText) {
+                    feedbackAlert.className = 'alert alert-warning py-2 px-3 small mb-0 d-flex align-items-center justify-content-between';
+                    feedbackText.innerText = 'Multiple locations found. Please select matching candidate below.';
+                    if (statusBadge) {
+                        statusBadge.className = 'badge bg-warning text-dark';
+                        statusBadge.innerText = 'SELECT MATCH';
+                    }
+                }
+
+                if (candidatesList) {
+                    candidatesList.innerHTML = '';
+                    data.results.forEach((item) => {
+                        const btnItem = document.createElement('button');
+                        btnItem.type = 'button';
+                        btnItem.className = 'list-group-item list-group-item-action bg-dark text-light border-secondary d-flex justify-content-between align-items-center py-2';
+                        btnItem.innerHTML = `
+                            <div>
+                                <strong class="text-white">${escapeHtml(item.display_name)}</strong>
+                                <div class="small text-secondary">Lat: ${item.latitude}, Lon: ${item.longitude} | Elev: ${item.elevation_m !== null ? item.elevation_m + 'm' : 'N/A'}</div>
+                            </div>
+                            <span class="badge bg-info text-dark fw-bold">Select</span>
+                        `;
+                        btnItem.onclick = () => selectShelterCandidate(item);
+                        candidatesList.appendChild(btnItem);
+                    });
+                }
+                if (candidatesContainer) candidatesContainer.classList.remove('d-none');
+            } else {
+                selectShelterCandidate(data);
+            }
+        } else {
+            const err = data.error || data.message || 'Location not found';
+            if (feedbackAlert && feedbackText) {
+                feedbackAlert.className = 'alert alert-danger py-2 px-3 small mb-0 d-flex align-items-center justify-content-between';
+                feedbackText.innerText = err;
+                if (statusBadge) {
+                    statusBadge.className = 'badge bg-danger';
+                    statusBadge.innerText = 'LOCATION NOT FOUND';
+                }
+            }
+            if (latInput) { latInput.value = ''; latInput.readOnly = false; }
+            if (lonInput) { lonInput.value = ''; lonInput.readOnly = false; }
+            if (elevInput) { elevInput.value = ''; elevInput.readOnly = false; }
+        }
+    } catch (err) {
+        console.error('Geocoding error:', err);
+        if (feedbackAlert && feedbackText) {
+            feedbackAlert.className = 'alert alert-danger py-2 px-3 small mb-0 d-flex align-items-center justify-content-between';
+            feedbackText.innerText = 'Location service temporarily unavailable. Please try again.';
+            if (statusBadge) {
+                statusBadge.className = 'badge bg-danger';
+                statusBadge.innerText = 'SERVICE ERROR';
+            }
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="search" style="width: 13px; height: 13px;" class="me-1"></i>Find Location';
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+
+function selectShelterCandidate(loc) {
+    const latInput = document.getElementById('shelterLatInput');
+    const lonInput = document.getElementById('shelterLonInput');
+    const elevInput = document.getElementById('shelterElevInput');
+    const feedbackAlert = document.getElementById('shelterLocFeedbackAlert');
+    const feedbackText = document.getElementById('shelterLocFeedbackText');
+    const statusBadge = document.getElementById('shelterLocStatusBadge');
+    const candidatesContainer = document.getElementById('shelterCandidatesContainer');
+
+    if (candidatesContainer) candidatesContainer.classList.add('d-none');
+
+    if (latInput) { latInput.value = loc.latitude; latInput.readOnly = false; }
+    if (lonInput) { lonInput.value = loc.longitude; lonInput.readOnly = false; }
+    if (elevInput) { elevInput.value = loc.elevation_m !== null ? loc.elevation_m : ''; elevInput.readOnly = false; }
+
+    if (feedbackAlert && feedbackText) {
+        feedbackAlert.className = 'alert alert-success py-2 px-3 small mb-0 d-flex align-items-center justify-content-between';
+        feedbackText.innerText = `Location found: ${loc.display_name} (Lat: ${loc.latitude}, Lon: ${loc.longitude}, Elev: ${loc.elevation_m}m)`;
+        if (statusBadge) {
+            statusBadge.className = 'badge bg-success';
+            statusBadge.innerText = 'LOCATION FOUND';
+        }
+    }
+}
+
+function validateShelterFormBeforeSubmit(e) {
+    const latInput = document.getElementById('shelterLatInput');
+    const lonInput = document.getElementById('shelterLonInput');
+    const elevInput = document.getElementById('shelterElevInput');
+
+    if (!latInput || !lonInput || !latInput.value || !lonInput.value) {
+        alert('Please search and select a valid location before creating the shelter.');
+        e.preventDefault();
+        return false;
+    }
+    return true;
+}
+</script>
+{% endblock %}

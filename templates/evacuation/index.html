@@ -1,0 +1,435 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM - Safe Evacuation & Dynamic Route Planner{% endblock %}
+{% block meta_description %}Plan safer evacuation routes and find emergency shelters using RUDRAM location and hazard intelligence.{% endblock %}
+{% block page_heading %}Safe Evacuation & Hazard-Aware Routing Engine{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="row g-4">
+    <!-- Routing Input Panel -->
+    <div class="col-lg-4">
+        <div class="rudram-card mb-4">
+            <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <i data-lucide="navigation" class="text-info" style="width: 18px; height: 18px;"></i>
+                Evacuation Origin & Safe Haven
+            </h6>
+
+            <form id="evacuationRouteForm">
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">Origin / Current GPS Position</label>
+                    <div class="input-group input-group-sm mb-1">
+                        <input type="text" id="startName" class="form-control bg-dark border-secondary text-light" placeholder="Locating position..." readonly required>
+                        <button type="button" class="btn btn-outline-info" onclick="useMyGps()" title="Request Real GPS Location">
+                            <i data-lucide="crosshair" style="width: 14px; height: 14px;"></i>
+                        </button>
+                    </div>
+                    <div class="row g-1 small text-secondary">
+                        <div class="col-6"><input type="number" step="any" id="startLat" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Latitude" readonly required></div>
+                        <div class="col-6"><input type="number" step="any" id="startLon" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Longitude" readonly required></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small text-secondary d-flex justify-content-between">
+                        <span>Destination Safe Shelter</span>
+                        <span class="text-info font-monospace" id="shelterCountBadge">Admin Shelters</span>
+                    </label>
+                    <select id="destSelect" class="form-select form-select-sm bg-dark border-secondary text-light mb-1" onchange="updateDestCoords()" required>
+                        <option value="">Loading Admin shelters...</option>
+                    </select>
+                    <div class="row g-1 small text-secondary">
+                        <div class="col-6"><input type="number" step="any" id="destLat" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Shelter Lat" readonly required></div>
+                        <div class="col-6"><input type="number" step="any" id="destLon" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="Shelter Lon" readonly required></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-2" id="btnCalculateRoute">
+                    <i data-lucide="search" style="width: 16px; height: 16px;"></i>
+                    SEARCH SAFE PATH
+                </button>
+            </form>
+        </div>
+
+        <!-- Live Route & Safety Breakdown Container -->
+        <div id="routeResultsContainer">
+            <h6 class="fw-bold mb-2 small text-uppercase text-secondary">Live Route Breakdown</h6>
+            <div id="routeStatusCard" class="rudram-card p-3 border-secondary text-secondary small">
+                Select current GPS position and target Admin Safe Shelter, then click <strong>Search Safe Path</strong>.
+            </div>
+        </div>
+    </div>
+
+    <!-- Evacuation Route Map -->
+    <div class="col-lg-8">
+        <div class="rudram-card p-0 overflow-hidden" style="height: 620px;">
+            <div id="evacMap" style="width: 100%; height: 100%;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/map.js"></script>
+<script>
+let evacMap = null;
+let currentGpsMarker = null;
+let destinationShelterMarker = null;
+let liveRoutePolyline = null;
+
+const adminShelters = {{ shelters_json|default:"[]"|safe }};
+
+document.addEventListener('DOMContentLoaded', () => {
+    evacMap = initRudramGISMap('evacMap', 20.2961, 85.8245, 12);
+    
+    // Auto-trigger GPS request on page load
+    useMyGps();
+});
+
+function decodeGooglePolylineJS(encoded) {
+    if (!encoded) return [];
+    var points = [];
+    var index = 0, len = encoded.length;
+    var lat = 0, lng = 0;
+    while (index < len) {
+        var b, shift = 0, result = 0;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+        } while (b >= 0x20);
+        var dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        lat += dlat;
+        shift = 0;
+        result = 0;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+        } while (b >= 0x20);
+        var dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        lng += dlng;
+        points.push([lat / 1e5, lng / 1e5]);
+    }
+    return points;
+}
+
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+function updateSheltersList(currentLat, currentLon) {
+    const destSelect = document.getElementById('destSelect');
+    const badge = document.getElementById('shelterCountBadge');
+    const statusCard = document.getElementById('routeStatusCard');
+    if (!destSelect) return;
+
+    if (!adminShelters || adminShelters.length === 0) {
+        destSelect.innerHTML = '<option value="">No admin-added safe shelter found nearby.</option>';
+        if (badge) badge.innerText = '0 Shelters';
+        document.getElementById('destLat').value = '';
+        document.getElementById('destLon').value = '';
+        return;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const rawShelterId = urlParams.get('shelter_id') || urlParams.get('shelter');
+    const targetShelterId = rawShelterId ? parseInt(rawShelterId, 10) : null;
+
+    let selectedShelterObj = null;
+    if (targetShelterId) {
+        selectedShelterObj = adminShelters.find(s => s.id === targetShelterId);
+        if (!selectedShelterObj) {
+            showToast('Selected shelter could not be found.', 'error');
+            if (statusCard) {
+                statusCard.className = 'rudram-card p-3 border-danger border-opacity-50';
+                statusCard.innerText = 'Selected shelter could not be found.';
+            }
+        }
+    }
+
+    // Calculate distance for each real admin shelter
+    const listWithDistance = adminShelters.map(s => {
+        const dist = (currentLat && currentLon) ? calculateHaversineDistance(currentLat, currentLon, s.latitude, s.longitude) : 0;
+        return { ...s, distance_km: dist };
+    });
+
+    // Sort nearby shelters by distance unless a specific shelter_id is requested
+    if (currentLat && currentLon && !selectedShelterObj) {
+        listWithDistance.sort((a, b) => a.distance_km - b.distance_km);
+    }
+
+    let html = '';
+    listWithDistance.forEach((s, idx) => {
+        const distLabel = (currentLat && currentLon) ? ` (${s.distance_km.toFixed(1)} km away)` : '';
+        const isTarget = selectedShelterObj ? (s.id === selectedShelterObj.id) : (idx === 0);
+        const selected = isTarget ? 'selected' : '';
+        const safeName = s.name ? s.name.replace(/"/g, '&quot;') : 'Shelter';
+        html += `<option value="${s.latitude},${s.longitude}" data-id="${s.id}" data-name="${safeName}" ${selected}>${s.name}${distLabel} — ${s.available_capacity} beds available</option>`;
+    });
+
+    destSelect.innerHTML = html;
+    if (badge) badge.innerText = `${adminShelters.length} Admin Shelters`;
+    updateDestCoords();
+
+    if (selectedShelterObj) {
+        showToast(`📍 Auto-selected Safe Shelter: ${selectedShelterObj.name}`, 'info');
+    }
+}
+
+function updateDestCoords() {
+    const destSelect = document.getElementById('destSelect');
+    if (!destSelect || !destSelect.value) return;
+
+    const parts = destSelect.value.split(',');
+    const lat = parseFloat(parts[0]);
+    const lon = parseFloat(parts[1]);
+
+    document.getElementById('destLat').value = lat;
+    document.getElementById('destLon').value = lon;
+
+    // Update destination shelter marker on map
+    if (evacMap && !isNaN(lat) && !isNaN(lon)) {
+        if (destinationShelterMarker) evacMap.removeLayer(destinationShelterMarker);
+        
+        const selOption = destSelect.options[destSelect.selectedIndex];
+        const shelterName = selOption ? selOption.getAttribute('data-name') : 'Destination Safe Shelter';
+
+        destinationShelterMarker = L.marker([lat, lon], {
+            icon: L.divIcon({
+                className: 'custom-shelter-marker',
+                html: '<div style="background-color: #10b981; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);"></div>',
+                iconSize: [18, 18],
+                iconAnchor: [9, 9]
+            })
+        }).addTo(evacMap);
+        destinationShelterMarker.bindPopup(`<strong class="text-success">${shelterName}</strong><br>Admin Destination Safe Shelter`);
+    }
+}
+
+function useMyGps() {
+    const nameInput = document.getElementById('startName');
+    const latInput = document.getElementById('startLat');
+    const lonInput = document.getElementById('startLon');
+
+    if (nameInput) nameInput.value = 'Acquiring real GPS location...';
+
+    if (!navigator.geolocation) {
+        showToast('Geolocation is not supported by your browser.', 'error');
+        if (nameInput) nameInput.value = 'GPS Unavailable';
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const accuracy = Math.round(position.coords.accuracy || 0);
+
+            latInput.value = lat.toFixed(6);
+            lonInput.value = lon.toFixed(6);
+
+            // Attempt live reverse geocoding via RUDRAM location API
+            let locName = `GPS Position (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+            try {
+                const res = await fetch(`/api/location/search/?q=${lat.toFixed(4)},${lon.toFixed(4)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.display_name || data.place_name) {
+                        locName = data.place_name || data.display_name;
+                    }
+                }
+            } catch (e) {
+                console.warn('Reverse geocoding warning:', e);
+            }
+
+            if (nameInput) nameInput.value = locName;
+            showToast(`📍 GPS Acquired: ${locName} (±${accuracy}m)`, 'success');
+
+            // Update map view with current GPS marker
+            if (evacMap) {
+                if (currentGpsMarker) evacMap.removeLayer(currentGpsMarker);
+
+                currentGpsMarker = L.marker([lat, lon], {
+                    icon: L.divIcon({
+                        className: 'custom-gps-marker',
+                        html: '<div style="background-color: #0284c7; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(2, 132, 199, 0.8);"></div>',
+                        iconSize: [18, 18],
+                        iconAnchor: [9, 9]
+                    })
+                }).addTo(evacMap);
+                currentGpsMarker.bindPopup(`<strong class="text-info">${locName}</strong><br>Current GPS Origin (±${accuracy}m)`);
+
+                evacMap.flyTo([lat, lon], 13);
+            }
+
+            // Re-filter and sort nearby Admin shelters by distance
+            updateSheltersList(lat, lon);
+        },
+        (error) => {
+            console.warn('GPS error:', error.message);
+            showToast('Unable to acquire GPS location. Please check location permissions.', 'error');
+            if (nameInput) nameInput.value = 'Location Permission Denied';
+            updateSheltersList(null, null);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+}
+
+document.getElementById('evacuationRouteForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const startLat = parseFloat(document.getElementById('startLat').value);
+    const startLon = parseFloat(document.getElementById('startLon').value);
+    const destLat = parseFloat(document.getElementById('destLat').value);
+    const destLon = parseFloat(document.getElementById('destLon').value);
+    const destSelect = document.getElementById('destSelect');
+
+    if (isNaN(startLat) || isNaN(startLon)) {
+        showToast('Please acquire your current GPS location first.', 'error');
+        return;
+    }
+
+    if (isNaN(destLat) || isNaN(destLon) || !destSelect || !destSelect.value) {
+        showToast('No admin-added safe shelter found nearby.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btnCalculateRoute');
+    const statusCard = document.getElementById('routeStatusCard');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Searching Safe Google Path...';
+
+    const payload = {
+        start_lat: startLat,
+        start_lon: startLon,
+        end_lat: destLat,
+        end_lon: destLon
+    };
+
+    try {
+        const csrfToken = (() => {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, 10) === 'csrftoken=') {
+                        cookieValue = decodeURIComponent(cookie.substring(10));
+                        break;
+                    }
+                }
+            }
+            if (cookieValue) return cookieValue;
+            const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+            return csrfInput ? csrfInput.value : '';
+        })();
+
+        const res = await fetch('/api/evacuation/route/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success && data.result) {
+            const rRes = data.result;
+            const routes = rRes.routes || [];
+
+            if (routes.length > 0) {
+                const primary = routes[0];
+                const distKm = primary.distance_km || 0;
+                const durMin = primary.duration_minutes || 0;
+                const srcName = rRes.source || 'Google Routes API';
+
+                // Render live road-by-road route polyline on Leaflet map
+                if (evacMap) {
+                    if (liveRoutePolyline) evacMap.removeLayer(liveRoutePolyline);
+
+                    let routeCoords = primary.coordinates;
+                    if (!routeCoords || routeCoords.length < 2) {
+                        if (primary.encoded_polyline) {
+                            routeCoords = decodeGooglePolylineJS(primary.encoded_polyline);
+                        }
+                    }
+
+                    // Strict rule: DO NOT draw a 2-point straight line fallback
+                    if (!routeCoords || routeCoords.length < 2) {
+                        showToast('Unable to calculate road route. Please try again.', 'error');
+                        if (statusCard) {
+                            statusCard.className = 'rudram-card p-3 border-danger border-opacity-50';
+                            statusCard.innerText = 'Unable to calculate road route. Please try again.';
+                        }
+                        return;
+                    }
+
+                    liveRoutePolyline = L.polyline(routeCoords, {
+                        color: '#10b981',
+                        weight: 6,
+                        opacity: 0.9,
+                        lineJoin: 'round',
+                        lineCap: 'round'
+                    }).addTo(evacMap);
+
+                    evacMap.fitBounds(liveRoutePolyline.getBounds(), { padding: [40, 40] });
+                }
+
+                if (statusCard) {
+                    statusCard.className = 'rudram-card p-3 border-success border-opacity-50';
+                    statusCard.style.background = 'rgba(16, 185, 129, 0.1)';
+                    statusCard.innerHTML = `
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <strong class="text-white">Live Safe Evacuation Route</strong>
+                            <span class="badge bg-success">RECOMMENDED</span>
+                        </div>
+                        <div class="small text-secondary mb-2">
+                            Distance: <strong class="text-info">${distKm} km</strong> &bull; Estimated Time: <strong class="text-info">${durMin} min</strong>
+                        </div>
+                        <div class="small text-success mb-0 d-flex align-items-center gap-1">
+                            <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+                            <span>Calculated via <strong>${srcName}</strong> to Admin Safe Shelter.</span>
+                        </div>
+                    `;
+                }
+                showToast(`📍 Safe Route Calculated: ${distKm} km (${durMin} min)`, 'success');
+            } else {
+                showToast('Unable to calculate route. Please try again.', 'error');
+                if (statusCard) {
+                    statusCard.className = 'rudram-card p-3 border-danger border-opacity-50';
+                    statusCard.innerText = 'Unable to calculate route. Please try again.';
+                }
+            }
+        } else {
+            showToast(data.message || 'Unable to calculate route. Please try again.', 'error');
+            if (statusCard) {
+                statusCard.className = 'rudram-card p-3 border-danger border-opacity-50';
+                statusCard.innerText = data.message || 'Unable to calculate route. Please try again.';
+            }
+        }
+    } catch (err) {
+        console.error('Route calculation error:', err);
+        showToast('Unable to calculate route. Please try again.', 'error');
+        if (statusCard) {
+            statusCard.className = 'rudram-card p-3 border-danger border-opacity-50';
+            statusCard.innerText = 'Unable to calculate route. Please try again.';
+        }
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="search" style="width: 16px; height: 16px;"></i> SEARCH SAFE PATH';
+        if (window.lucide) lucide.createIcons();
+    }
+});
+</script>
+{% endblock %}

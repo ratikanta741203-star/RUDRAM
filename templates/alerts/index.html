@@ -1,0 +1,494 @@
+{% extends 'base.html' %}
+
+{% block title %}RUDRAM - Emergency Alerts & Siren Broadcast{% endblock %}
+{% block meta_description %}Monitor active emergency alerts and coordinate public safety notifications through the RUDRAM disaster response system.{% endblock %}
+{% block page_heading %}Emergency Alert Notification & Broadcast Center{% endblock %}
+
+{% block content %}
+<!-- Quick Alert Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-4">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">Critical Red Alerts</div>
+                <div class="stat-value text-danger">{{ critical_count|default:"1" }}</div>
+            </div>
+            <i data-lucide="bell-ring" class="text-danger opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">High Orange Warnings</div>
+                <div class="stat-value text-warning">{{ high_count|default:"0" }}</div>
+            </div>
+            <i data-lucide="alert-triangle" class="text-warning opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="rudram-card stat-widget">
+            <div>
+                <div class="stat-label">Informational Advisories</div>
+                <div class="stat-value text-info">{{ warning_count|default:"0" }}</div>
+            </div>
+            <i data-lucide="info" class="text-info opacity-50" style="width: 32px; height: 32px;"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Role-Specific Action Bar -->
+{% if user_role == 'ADMIN' %}
+<div class="rudram-card mb-4 border border-danger border-opacity-50">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h6 class="fw-bold mb-1 text-white d-flex align-items-center gap-2">
+                <i data-lucide="shield-alert" class="text-danger" style="width: 18px; height: 18px;"></i>
+                Admin Command Broadcast Control
+            </h6>
+            <div class="small text-secondary">Issue geo-fenced CAP alerts directly or review pending Emergency Operator requests below.</div>
+        </div>
+        <button class="btn btn-danger fw-bold" onclick="openCreateAlertModal()">+ Issue New Emergency Alert</button>
+    </div>
+</div>
+{% elif user_role == 'EMERGENCY_OPERATOR' %}
+<div class="rudram-card mb-4 border border-info border-opacity-50">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h6 class="fw-bold mb-1 text-white d-flex align-items-center gap-2">
+                <i data-lucide="radio" class="text-info" style="width: 18px; height: 18px;"></i>
+                Operator Alert Request Desk
+            </h6>
+            <div class="small text-secondary">Emergency Operators have read access by default. Submit a change request for Admin approval to broadcast or deactivate alerts.</div>
+        </div>
+        <button class="btn btn-info text-dark fw-bold" onclick="openRequestChangeModal()">Request Alert Change</button>
+    </div>
+</div>
+{% endif %}
+
+{% if user_role == 'ADMIN' %}
+<!-- Admin Alert Change Requests Review Panel -->
+<div class="rudram-card mb-4 border border-warning border-opacity-50">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="fw-bold mb-0 text-warning d-flex align-items-center gap-2">
+            <i data-lucide="file-check" style="width: 18px; height: 18px;"></i>
+            Operator Alert Change Requests (Admin Review Panel)
+        </h6>
+        <span class="badge bg-warning text-dark font-monospace">{{ all_requests|length }} Total Requests</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-dark table-hover small mb-0">
+            <thead>
+                <tr class="text-secondary">
+                    <th>OPERATOR</th>
+                    <th>ACTION</th>
+                    <th>ALERT DETAILS</th>
+                    <th>REASON</th>
+                    <th>REQUESTED AT</th>
+                    <th>STATUS</th>
+                    <th class="text-end">ADMIN ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in all_requests %}
+                <tr>
+                    <td><strong>{{ req.operator.username }}</strong></td>
+                    <td><span class="badge bg-dark border border-secondary text-info">{{ req.requested_action }}</span></td>
+                    <td>
+                        <div class="fw-bold text-white">{{ req.title|default:req.alert.title|default:"--" }}</div>
+                        <div class="text-muted small">{{ req.severity }} &bull; {{ req.location_name }}</div>
+                    </td>
+                    <td class="text-secondary" style="max-width: 200px;">{{ req.reason }}</td>
+                    <td class="text-muted">{{ req.requested_at|timesince }} ago</td>
+                    <td>
+                        {% if req.status == 'PENDING' %}
+                        <span class="badge bg-warning text-dark">PENDING ADMIN APPROVAL</span>
+                        {% elif req.status == 'APPROVED' %}
+                        <span class="badge bg-success">APPROVED</span>
+                        {% else %}
+                        <span class="badge bg-danger">REJECTED</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if req.status == 'PENDING' %}
+                        <button class="btn btn-sm btn-success me-1 px-2 py-0 fw-bold" onclick="reviewAlertRequest({{ req.id }}, 'ALLOW')">ALLOW</button>
+                        <button class="btn btn-sm btn-danger px-2 py-0 fw-bold" onclick="reviewAlertRequest({{ req.id }}, 'REJECT')">REJECT</button>
+                        {% else %}
+                        <span class="text-muted small">Reviewed</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-muted text-center py-3">No operator change requests submitted yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if user_role == 'EMERGENCY_OPERATOR' %}
+<!-- Operator Submitted Requests Status -->
+<div class="rudram-card mb-4 border border-secondary border-opacity-50">
+    <h6 class="fw-bold mb-3 small text-uppercase text-secondary">My Submitted Alert Change Requests</h6>
+    <div class="table-responsive">
+        <table class="table table-dark table-hover small mb-0">
+            <thead>
+                <tr class="text-secondary">
+                    <th>ACTION</th>
+                    <th>ALERT / TITLE</th>
+                    <th>REASON SUBMITTED</th>
+                    <th>REQUESTED AT</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in my_requests %}
+                <tr>
+                    <td><span class="badge bg-dark border border-secondary text-info">{{ req.requested_action }}</span></td>
+                    <td>
+                        <div class="fw-bold text-white">{{ req.title|default:req.alert.title|default:"--" }}</div>
+                        <div class="text-muted small">{{ req.severity }} &bull; {{ req.location_name }}</div>
+                    </td>
+                    <td class="text-secondary">{{ req.reason }}</td>
+                    <td class="text-muted">{{ req.requested_at|timesince }} ago</td>
+                    <td>
+                        {% if req.status == 'PENDING' %}
+                        <span class="badge bg-warning text-dark">PENDING ADMIN APPROVAL</span>
+                        {% elif req.status == 'APPROVED' %}
+                        <span class="badge bg-success">APPROVED BY ADMIN</span>
+                        {% else %}
+                        <span class="badge bg-danger">REJECTED BY ADMIN</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-muted text-center py-3">You have not submitted any alert change requests yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Active Alerts Stream -->
+<div class="rudram-card">
+    <h6 class="fw-bold mb-3 small text-uppercase text-secondary">Active &amp; Historical Multi-Hazard Alerts</h6>
+    <div class="d-flex flex-column gap-3">
+        {% for alert in alerts %}
+        <div class="p-3 bg-dark bg-opacity-50 border border-{% if alert.severity == 'CRITICAL' %}danger{% elif alert.severity == 'HIGH' %}warning{% else %}info{% endif %} border-opacity-50 rounded-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-risk-{{ alert.severity|lower }}">{{ alert.severity }} ALERT</span>
+                    <span class="badge bg-secondary">{{ alert.disaster_type }}</span>
+                    <strong class="text-white fs-6">{{ alert.title }}</strong>
+                </div>
+                <span class="small text-muted">{{ alert.created_at|timesince }} ago</span>
+            </div>
+
+            <p class="small text-light mb-2">{{ alert.message }}</p>
+
+            <div class="p-2 bg-black bg-opacity-40 rounded small text-secondary mb-3">
+                <strong class="text-info">Action Required:</strong> {{ alert.recommended_action }}
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2 border-top border-secondary border-opacity-25 small text-muted">
+                <div><span>Target: <strong>{{ alert.location_name }}</strong></span> &bull; <span>Channels: <strong>{{ alert.broadcast_channels }}</strong></span></div>
+                {% if alert.is_active %}
+                    {% if user_role == 'ADMIN' %}
+                    <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="dismissAlert({{ alert.id }})">Deactivate Alert</button>
+                    {% elif user_role == 'EMERGENCY_OPERATOR' %}
+                    <button class="btn btn-sm btn-outline-info py-0 px-2" onclick="openRequestDeactivateModal({{ alert.id }}, '{{ alert.title|escapejs }}')">Request Deactivation</button>
+                    {% else %}
+                    <span class="badge bg-success">ACTIVE</span>
+                    {% endif %}
+                {% else %}
+                <span class="badge bg-secondary">Archived</span>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-4 text-muted">
+            <i data-lucide="bell-off" class="mb-2" style="width: 32px; height: 32px;"></i>
+            <div>No active alerts in this operational sector.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if user_role == 'ADMIN' %}
+<!-- Admin Direct Issue Alert Modal -->
+<div class="modal fade" id="createAlertModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-danger">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-danger d-flex align-items-center gap-2">
+                    <i data-lucide="alert-triangle" style="width: 20px; height: 20px;"></i>
+                    Broadcast Emergency Alert (Admin Direct)
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createAlertForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary">Alert Title</label>
+                        <input type="text" id="alertTitle" class="form-control bg-dark border-secondary text-light" value="RED WARNING: Daya River Embankment Overflow" required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small text-secondary">Severity Level</label>
+                            <select id="alertSeverity" class="form-select form-select-sm bg-dark border-secondary text-light">
+                                <option value="CRITICAL" selected>CRITICAL (Red Alert)</option>
+                                <option value="HIGH">HIGH (Orange Warning)</option>
+                                <option value="WARNING">WARNING (Yellow Advisory)</option>
+                                <option value="INFO">INFO (Notice)</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-secondary">Hazard Category</label>
+                            <select id="alertType" class="form-select form-select-sm bg-dark border-secondary text-light">
+                                <option value="FLOOD" selected>Flood Inundation</option>
+                                <option value="CYCLONE">Cyclone &amp; Surge</option>
+                                <option value="WILDFIRE">Wildfire</option>
+                                <option value="HEAVY_RAINFALL">Extreme Rain</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary">Location Zone</label>
+                        <input type="text" id="alertLocation" class="form-control form-control-sm bg-dark border-secondary text-light" value="Sundarpada &amp; Rasulgarh Lowlands">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary">Broadcast Warning Message</label>
+                        <textarea id="alertMessage" class="form-control bg-dark border-secondary text-light" rows="2">Rapid flood water rise. Immediate evacuation advised to BJB College Shelter via Janpath Bypass.</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary">Recommended Citizen Action</label>
+                        <input type="text" id="alertAction" class="form-control form-control-sm bg-dark border-secondary text-light" value="Evacuate low-lying riverbanks immediately. Avoid submerged Daya road.">
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger fw-bold">Broadcast Siren &amp; Alert</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if user_role == 'EMERGENCY_OPERATOR' or user_role == 'ADMIN' %}
+<!-- Operator Alert Change Request Modal -->
+<div class="modal fade" id="requestAlertChangeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-info">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-info d-flex align-items-center gap-2">
+                    <i data-lucide="send" style="width: 20px; height: 20px;"></i>
+                    Request Alert Change (Operator)
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="requestAlertChangeForm">
+                <input type="hidden" id="reqTargetAlertId" value="">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary">Requested Action</label>
+                        <select id="reqActionType" class="form-select form-select-sm bg-dark border-secondary text-light">
+                            <option value="CREATE" selected>Create Emergency Alert</option>
+                            <option value="DEACTIVATE">Deactivate Alert</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary">Reason for Request <span class="text-danger">*</span></label>
+                        <textarea id="reqReason" class="form-control bg-dark border-secondary text-light" rows="2" placeholder="Explain why this alert change is required for Admin review..." required></textarea>
+                    </div>
+                    <div id="reqDetailsFields">
+                        <div class="mb-3">
+                            <label class="form-label small text-secondary">Alert Title</label>
+                            <input type="text" id="reqAlertTitle" class="form-control bg-dark border-secondary text-light" value="ORANGE WARNING: Coastal Wind Speed Surge">
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small text-secondary">Severity Level</label>
+                                <select id="reqAlertSeverity" class="form-select form-select-sm bg-dark border-secondary text-light">
+                                    <option value="CRITICAL">CRITICAL (Red Alert)</option>
+                                    <option value="HIGH" selected>HIGH (Orange Warning)</option>
+                                    <option value="WARNING">WARNING (Yellow Advisory)</option>
+                                    <option value="INFO">INFO (Notice)</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small text-secondary">Hazard Category</label>
+                                <select id="reqAlertType" class="form-select form-select-sm bg-dark border-secondary text-light">
+                                    <option value="CYCLONE" selected>Cyclone &amp; Surge</option>
+                                    <option value="FLOOD">Flood Inundation</option>
+                                    <option value="WILDFIRE">Wildfire</option>
+                                    <option value="HEAVY_RAINFALL">Extreme Rain</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-secondary">Location Zone</label>
+                            <input type="text" id="reqAlertLocation" class="form-control form-control-sm bg-dark border-secondary text-light" value="Paradeep Coastal Sector">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-secondary">Broadcast Warning Message</label>
+                            <textarea id="reqAlertMessage" class="form-control bg-dark border-secondary text-light" rows="2">High wind gusts reaching 85 km/h along coastal Paradeep. Fishermen advised not to venture into sea.</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-secondary">Recommended Citizen Action</label>
+                            <input type="text" id="reqAlertAction" class="form-control form-control-sm bg-dark border-secondary text-light" value="Stay indoors and away from loose coastal structures.">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info text-dark fw-bold">Submit Change Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let createAlertModalObj = null;
+let reqChangeModalObj = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const el1 = document.getElementById('createAlertModal');
+    if (el1) createAlertModalObj = new bootstrap.Modal(el1);
+
+    const el2 = document.getElementById('requestAlertChangeModal');
+    if (el2) reqChangeModalObj = new bootstrap.Modal(el2);
+});
+
+function openCreateAlertModal() {
+    if (createAlertModalObj) createAlertModalObj.show();
+}
+
+function openRequestChangeModal() {
+    document.getElementById('reqTargetAlertId').value = '';
+    document.getElementById('reqActionType').value = 'CREATE';
+    document.getElementById('reqDetailsFields').style.display = 'block';
+    if (reqChangeModalObj) reqChangeModalObj.show();
+}
+
+function openRequestDeactivateModal(alertId, alertTitle) {
+    document.getElementById('reqTargetAlertId').value = alertId;
+    document.getElementById('reqActionType').value = 'DEACTIVATE';
+    document.getElementById('reqAlertTitle').value = alertTitle;
+    document.getElementById('reqReason').value = `Requesting deactivation of alert: ${alertTitle}`;
+    document.getElementById('reqDetailsFields').style.display = 'none';
+    if (reqChangeModalObj) reqChangeModalObj.show();
+}
+
+async function dismissAlert(id) {
+    try {
+        const res = await fetch(`/api/alerts/${id}/dismiss/`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Alert deactivated and moved to archive.', 'info');
+            setTimeout(() => window.location.reload(), 600);
+        } else {
+            showToast(data.error || 'Permission Denied', 'error');
+        }
+    } catch (e) {
+        showToast('Error dismissing alert', 'error');
+    }
+}
+
+async function reviewAlertRequest(reqId, action) {
+    try {
+        const res = await fetch(`/api/admin/alert-requests/${reqId}/review/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: action })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(`Request ${action === 'ALLOW' ? 'ALLOWED' : 'REJECTED'} successfully!`, action === 'ALLOW' ? 'success' : 'info');
+            setTimeout(() => window.location.reload(), 600);
+        } else {
+            showToast(data.error || 'Error reviewing request', 'error');
+        }
+    } catch (e) {
+        showToast('Network error reviewing request', 'error');
+    }
+}
+
+const createForm = document.getElementById('createAlertForm');
+if (createForm) {
+    createForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            title: document.getElementById('alertTitle').value,
+            severity: document.getElementById('alertSeverity').value,
+            disaster_type: document.getElementById('alertType').value,
+            location_name: document.getElementById('alertLocation').value,
+            message: document.getElementById('alertMessage').value,
+            recommended_action: document.getElementById('alertAction').value,
+            source: 'RUDRAM Emergency Operations Command Center'
+        };
+
+        try {
+            const res = await fetch('/api/alerts/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Emergency Alert transmitted across CAP channels!', 'success');
+                if (createAlertModalObj) createAlertModalObj.hide();
+                setTimeout(() => window.location.reload(), 700);
+            } else {
+                showToast(data.error || 'Permission Denied: Admin required to issue alerts directly.', 'error');
+            }
+        } catch (e) {
+            showToast('Error broadcasting alert', 'error');
+        }
+    });
+}
+
+const reqForm = document.getElementById('requestAlertChangeForm');
+if (reqForm) {
+    reqForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            requested_action: document.getElementById('reqActionType').value,
+            alert_id: document.getElementById('reqTargetAlertId').value || null,
+            reason: document.getElementById('reqReason').value,
+            title: document.getElementById('reqAlertTitle').value,
+            severity: document.getElementById('reqAlertSeverity').value,
+            disaster_type: document.getElementById('reqAlertType').value,
+            location_name: document.getElementById('reqAlertLocation').value,
+            message: document.getElementById('reqAlertMessage').value,
+            recommended_action: document.getElementById('reqAlertAction').value
+        };
+
+        try {
+            const res = await fetch('/api/alerts/request-change/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Alert Change Request submitted! Pending Admin approval.', 'success');
+                if (reqChangeModalObj) reqChangeModalObj.hide();
+                setTimeout(() => window.location.reload(), 700);
+            } else {
+                showToast(data.error || 'Error submitting request', 'error');
+            }
+        } catch (e) {
+            showToast('Network error submitting request', 'error');
+        }
+    });
+}
+</script>
+{% endblock %}
