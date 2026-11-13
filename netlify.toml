@@ -1,0 +1,24 @@
+[build]
+  publish = "static"
+  command = ""
+
+[build.environment]
+  NODE_VERSION = "24"
+
+[[redirects]]
+  from = "/static/*"
+  to = "/:splat"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "DENY"
+
+[dev]
+  command = "node --watch scripts/dev.mjs"
+  targetPort = 3000
+  port = 8889
+  framework = "#custom"

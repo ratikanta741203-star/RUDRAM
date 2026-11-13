@@ -11,7 +11,7 @@
         <div class="rudram-card stat-widget">
             <div>
                 <div class="stat-label">Total Camp Capacity</div>
-                <div class="stat-value text-white">{{ total_cap|default:"4,500" }}</div>
+                <div class="stat-value text-white">{{ total_cap|default:"0" }}</div>
             </div>
             <i data-lucide="home" class="text-secondary opacity-50" style="width: 32px; height: 32px;"></i>
         </div>
@@ -20,7 +20,7 @@
         <div class="rudram-card stat-widget">
             <div>
                 <div class="stat-label">Current Occupancy</div>
-                <div class="stat-value text-warning">{{ total_occ|default:"1,360" }}</div>
+                <div class="stat-value text-warning">{{ total_occ|default:"0" }}</div>
             </div>
             <i data-lucide="users" class="text-warning opacity-50" style="width: 32px; height: 32px;"></i>
         </div>
@@ -29,7 +29,7 @@
         <div class="rudram-card stat-widget">
             <div>
                 <div class="stat-label">Available Capacity</div>
-                <div class="stat-value text-success">{{ available_cap|default:"3,140" }}</div>
+                <div class="stat-value text-success">{{ available_cap|default:"0" }}</div>
             </div>
             <i data-lucide="user-check" class="text-success opacity-50" style="width: 32px; height: 32px;"></i>
         </div>
@@ -38,7 +38,7 @@
         <div class="rudram-card stat-widget">
             <div>
                 <div class="stat-label">Active Open Shelters</div>
-                <div class="stat-value text-info">{{ open_count|default:"4" }}</div>
+                <div class="stat-value text-info">{{ open_count|default:"0" }}</div>
             </div>
             <i data-lucide="door-open" class="text-info opacity-50" style="width: 32px; height: 32px;"></i>
         </div>

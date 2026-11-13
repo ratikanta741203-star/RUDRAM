@@ -5,6 +5,7 @@
 {% block page_heading %}Safe Evacuation & Hazard-Aware Routing Engine{% endblock %}
 
 {% block content %}
+<div class="alert alert-warning small">Road routes do not verify flooding, closures, or evacuation safety. Follow current local evacuation orders.</div>
 {% csrf_token %}
 <div class="row g-4">
     <!-- Routing Input Panel -->
@@ -306,7 +307,7 @@ document.getElementById('evacuationRouteForm').addEventListener('submit', async 
     const statusCard = document.getElementById('routeStatusCard');
 
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Searching Safe Google Path...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Finding road directions...';
 
     const payload = {
         start_lat: startLat,
@@ -391,8 +392,8 @@ document.getElementById('evacuationRouteForm').addEventListener('submit', async 
                     statusCard.style.background = 'rgba(16, 185, 129, 0.1)';
                     statusCard.innerHTML = `
                         <div class="d-flex align-items-center justify-content-between mb-1">
-                            <strong class="text-white">Live Safe Evacuation Route</strong>
-                            <span class="badge bg-success">RECOMMENDED</span>
+                            <strong class="text-white">Road Route — Conditions Unverified</strong>
+                            <span class="badge bg-success">ROAD DIRECTIONS</span>
                         </div>
                         <div class="small text-secondary mb-2">
                             Distance: <strong class="text-info">${distKm} km</strong> &bull; Estimated Time: <strong class="text-info">${durMin} min</strong>

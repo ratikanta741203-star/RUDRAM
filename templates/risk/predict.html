@@ -5,6 +5,7 @@
 {% block page_heading %}AI Flood Risk Prediction & SHAP Factor Breakdown{% endblock %}
 
 {% block content %}
+<div class="alert alert-info small">Experimental flood estimates use trained repository models and live weather. Missing hydrological observations use disclosed assumptions. These estimates are not official warnings.</div>
 <div class="row g-4">
     <!-- Input Parameter Studio Form -->
     <div class="col-lg-5">
@@ -657,11 +658,11 @@ async function executeRiskPredictionInference(payload) {
             const expl = data.explanation;
 
             document.getElementById('outLocationName').innerText = pred.location_name;
-            document.getElementById('outModelMode').innerText = `Model: ${pred.model_mode} (Real Multi-Disaster XGBoost / RF Estimator)`;
+            document.getElementById('outModelMode').innerText = `Model: ${pred.model_mode} (Experimental flood estimator)`;
             document.getElementById('outRiskBadge').className = `badge badge-risk-${pred.risk_level.toLowerCase()} fs-6`;
             document.getElementById('outRiskBadge').innerText = `${pred.risk_level} ${pred.risk_score}%`;
             document.getElementById('outScoreVal').innerText = `${pred.risk_score}%`;
-            document.getElementById('outConfidenceVal').innerText = `${Math.round(pred.confidence * 100)}%`;
+            document.getElementById('outConfidenceVal').innerText = pred.confidence == null ? 'Not calibrated' : `${Math.round(pred.confidence * 100)}%`;
             document.getElementById('outDecisionVal').innerText = pred.risk_level === 'CRITICAL' ? 'EVACUATE' : (pred.risk_level === 'HIGH' ? 'WARNING' : 'MONITOR');
 
             const actionEl = document.getElementById('outActionDirective');

@@ -33,7 +33,7 @@
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
-                <strong>Notification:</strong> {{ message }}
+                <strong>Notification:</strong> {{ message.message|default:message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         {% endfor %}
@@ -946,6 +946,7 @@
 
         <!-- ==================== 7. USERS SECTION ==================== -->
         <div class="tab-pane fade" id="sec-users" role="tabpanel">
+<div class="alert alert-info">Accounts and trusted staff roles are managed through Netlify Identity. New signups have citizen access.</div>
             <div class="card border-0 shadow-sm bg-white">
                 <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
                     <h6 class="fw-bold mb-0 text-dark"><i data-lucide="user-check" style="width: 18px; height: 18px;" class="me-2 text-primary"></i> System Access & Role Management</h6>

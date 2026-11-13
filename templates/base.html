@@ -138,7 +138,7 @@
                                 <i data-lucide="bot" style="width: 15px; height: 15px;"></i> INTELLIGENCE
                             </button>
                             <ul class="dropdown-menu dropdown-menu-dark shadow-lg border border-secondary border-opacity-25">
-                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'assistant' %}active{% endif %}" href="{% url 'assistant' %}"><i data-lucide="bot" style="width: 14px; height: 14px;"></i> AI Assistant</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'assistant' %}active{% endif %}" href="{% url 'assistant' %}"><i data-lucide="bot" style="width: 14px; height: 14px;"></i> Preparedness Assistant</a></li>
                                 <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'satellite' %}active{% endif %}" href="{% url 'satellite' %}"><i data-lucide="orbit" style="width: 14px; height: 14px;"></i> Satellite Lab</a></li>
                                 {% if USER_ROLE == 'ADMIN' or user.is_superuser %}
                                 <li><a class="dropdown-item d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'reports' %}active{% endif %}" href="{% url 'reports' %}"><i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Reports</a></li>
@@ -257,7 +257,7 @@
 
                         <!-- INTELLIGENCE -->
                         <div class="text-secondary small fw-bold text-uppercase mt-3 mb-1 tracking-wide" style="font-size: 0.7rem;">Intelligence</div>
-                        <a href="{% url 'assistant' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="bot" style="width: 16px; height: 16px;"></i> AI Assistant</a>
+                        <a href="{% url 'assistant' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="bot" style="width: 16px; height: 16px;"></i> Preparedness Assistant</a>
                         <a href="{% url 'satellite' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="orbit" style="width: 16px; height: 16px;"></i> Satellite Lab</a>
                         {% if USER_ROLE == 'ADMIN' or user.is_superuser %}
                         <a href="{% url 'reports' %}" class="list-group-item list-group-item-action bg-transparent text-light border-0 py-2 ps-4 d-flex align-items-center gap-2"><i data-lucide="file-text" style="width: 16px; height: 16px;"></i> Reports</a>
@@ -296,7 +296,7 @@
                 <div class="mb-3">
                     {% for message in messages %}
                     <div class="alert alert-{% if 'error' in message.tags %}danger{% elif 'success' in message.tags %}success{% elif 'warning' in message.tags %}warning{% elif 'info' in message.tags %}info{% else %}secondary{% endif %} alert-dismissible fade show" role="alert">
-                        {{ message }}
+                        {{ message.message|default:message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                     {% endfor %}
@@ -438,5 +438,6 @@
     <!-- Custom Client JS -->
     <script src="/static/js/main.js?v=1.2"></script>
     {% block extra_js %}{% endblock %}
+<script type="module" src="/static/js/auth.mjs"></script>
 </body>
 </html>
