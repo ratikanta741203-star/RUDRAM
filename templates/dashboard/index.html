@@ -38,7 +38,7 @@
             <div class="d-none d-md-block text-muted" id="contextCoordinates">Lat: 20.2961° N, Lon: 85.8245° E</div>
             {% if USER_ROLE == 'ADMIN' or user_role == 'ADMIN' or user.profile.role == 'ADMIN' or user.is_superuser or user.is_staff %}
             <div class="d-none d-md-block text-muted">&bull;</div>
-            <div>Status: <span class="badge badge-live" id="contextStatusBadge">Connected</span></div>
+            <div>Status: <span class="badge badge-live" id="contextStatusBadge">On demand</span></div>
             {% endif %}
             <div class="d-none d-md-block text-muted">&bull;</div>
             <div>Updated: <strong class="text-info" id="contextUpdated">Just now</strong></div>
@@ -657,7 +657,7 @@ window.fetchDashboardLocationWeather = async function fetchDashboardLocationWeat
             }
         }
 
-        if (updatedEl) updatedEl.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (updatedEl) updatedEl.innerText = currRes.ok && foreRes.ok ? new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Weather unavailable — retry';
     } catch (e) {
         console.warn("Telemetry sync warning:", e);
         if (updatedEl && currentReqId === latestTelemetryRequestId) updatedEl.innerText = 'Sync Error';
@@ -1134,7 +1134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div class="text-end">
                             <div class="fs-3 fw-bold text-danger mb-0" id="modalRiskScoreVal">--</div>
-                            <span class="badge bg-danger p-2" id="modalRiskLevelBadge">HIGH / CRITICAL RISK</span>
+                            <span class="badge bg-danger p-2" id="modalRiskLevelBadge">Awaiting assessment</span>
                         </div>
                     </div>
                 </div>
@@ -1177,7 +1177,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </tr>
                                     <tr class="border-bottom border-opacity-10">
                                         <td class="ps-3 text-secondary">AI Prediction Engine & Model Mode</td>
-                                        <td class="fw-bold text-white" id="modalModelMode">XGBoost ML Classifier v2.4</td>
+                                        <td class="fw-bold text-white" id="modalModelMode">Experimental flood estimator</td>
                                     </tr>
                                     <tr>
                                         <td class="ps-3 text-secondary">Last Updated Timestamp</td>

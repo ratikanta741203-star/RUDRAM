@@ -45,7 +45,7 @@
                 <i data-lucide="shield-alert" class="text-danger" style="width: 18px; height: 18px;"></i>
                 Admin Command Broadcast Control
             </h6>
-            <div class="small text-secondary">Issue geo-fenced CAP alerts directly or review pending Emergency Operator requests below.</div>
+            <div class="small text-secondary">Publish website alerts directly or review pending Emergency Operator requests below.</div>
         </div>
         <button class="btn btn-danger fw-bold" onclick="openCreateAlertModal()">+ Issue New Emergency Alert</button>
     </div>
@@ -443,7 +443,7 @@ if (createForm) {
             });
             const data = await res.json();
             if (data.success) {
-                showToast('Emergency Alert transmitted across CAP channels!', 'success');
+                showToast('Alert published on the website.', 'success');
                 if (createAlertModalObj) createAlertModalObj.hide();
                 setTimeout(() => window.location.reload(), 700);
             } else {

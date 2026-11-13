@@ -11,7 +11,7 @@
         <div class="rudram-card stat-widget">
             <div>
                 <div class="stat-label">Available Supplies</div>
-                <div class="stat-value text-success">{{ total_avail|default:"28,500" }}</div>
+                <div class="stat-value text-success">{{ total_avail|default:"0" }}</div>
                 <div class="badge-source mt-1">Central Warehouse</div>
             </div>
             <i data-lucide="package-check" class="text-success opacity-50" style="width: 32px; height: 32px;"></i>
@@ -21,7 +21,7 @@
         <div class="rudram-card stat-widget">
             <div>
                 <div class="stat-label">Dispatched / In-Transit</div>
-                <div class="stat-value text-info">{{ total_alloc|default:"8,200" }}</div>
+                <div class="stat-value text-info">{{ total_alloc|default:"0" }}</div>
                 <div class="badge-source mt-1">Field Convoys</div>
             </div>
             <i data-lucide="truck" class="text-info opacity-50" style="width: 32px; height: 32px;"></i>
@@ -31,7 +31,7 @@
         <div class="rudram-card stat-widget">
             <div>
                 <div class="stat-label">Target Requisition</div>
-                <div class="stat-value text-warning">{{ total_req|default:"42,000" }}</div>
+                <div class="stat-value text-warning">{{ total_req|default:"0" }}</div>
                 <div class="badge-source mt-1">Emergency Estimate</div>
             </div>
             <i data-lucide="clipboard-list" class="text-warning opacity-50" style="width: 32px; height: 32px;"></i>
@@ -41,7 +41,7 @@
         <div class="rudram-card stat-widget">
             <div>
                 <div class="stat-label">Rescue Battalions</div>
-                <div class="stat-value text-primary">4 Staged</div>
+                <div class="stat-value text-primary">{{ rescue_teams|length }} Recorded</div>
                 <div class="badge-source mt-1">ODRAF / NDRF / Fire</div>
             </div>
             <i data-lucide="shield" class="text-primary opacity-50" style="width: 32px; height: 32px;"></i>
@@ -91,11 +91,11 @@
                             {% if user_role != 'CITIZEN' %}
                             <td>
                                 {% if user_role == 'ADMIN' %}
-                                <button class="btn btn-sm btn-outline-info py-0 px-2 fw-bold" onclick="quickAllocateItem({{ r.id }}, '{{ r.name }}', {{ r.quantity_available }})">
+                                <button class="btn btn-sm btn-outline-info py-0 px-2 fw-bold" onclick="quickAllocateItem({{ r.id }}, '{{ r.name|escapejs }}', {{ r.quantity_available }})">
                                     Dispatch
                                 </button>
                                 {% elif user_role == 'EMERGENCY_OPERATOR' %}
-                                <button class="btn btn-sm btn-outline-warning py-0 px-2 fw-bold" onclick="quickAllocateItem({{ r.id }}, '{{ r.name }}', {{ r.quantity_available }})">
+                                <button class="btn btn-sm btn-outline-warning py-0 px-2 fw-bold" onclick="quickAllocateItem({{ r.id }}, '{{ r.name|escapejs }}', {{ r.quantity_available }})">
                                     Request Dispatch
                                 </button>
                                 {% endif %}
